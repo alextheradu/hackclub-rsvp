@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 AGENTS.md
+.playwright-mcp
 
 # debug
 npm-debug.log*

@@ -1,21 +1,35 @@
-import GradientASCII from "@/components/GradientASCII/GradientASCII";
 import styles from "./page.module.css";
-
-const ASCII_COLORS = ["#1a0a0d", "#8a1424", "#ec3750", "#ff8fa0"];
+import SideRays from "@/components/GradientASCII/SideRays";
 
 export default function Home() {
   return (
     <div className={styles.page}>
       <div className={styles.background}>
-        <GradientASCII colors={ASCII_COLORS} shape="horizon" />
+  <SideRays
+    rayColor1="#ff8fa0"
+    rayColor2="#ec3750"
+    origin="top-left"
+    speed={3.7}
+    intensity={2.75}
+    spread={2.65}
+    density={6}
+    followMouse={true}
+    blend={0.43}
+    sharpness={0.14}
+    tilt={8}
+    falloff={1.05}
+    glow={1.45}
+    saturation={1.1}
+    mouseInfluence={0.59}
+/>
       </div>
       <div className={styles.scrim} />
 
-      <header className={styles.header}>
+      {/* <header className={styles.header}>
         <span className={styles.brand}>
           hackclub<span>.rsvp</span>
         </span>
-      </header>
+      </header> */}
 
       <main className={styles.hero}>
         <h1 className={styles.title}>
