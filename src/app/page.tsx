@@ -18,7 +18,7 @@ export default function Home() {
     sharpness={0.14}
     tilt={8}
     falloff={1.05}
-    glow={1.45}
+    glow={2}
     saturation={1.1}
     mouseInfluence={0.59}
 />

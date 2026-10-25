@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import HackClubBanner from "@/components/HackClubBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "hackclub.rsvp",
   description: "One RSVP app for Hack Club events and YSWS programs.",
+  icons: { icon: { url: "/icon-rounded.svg", type: "image/svg+xml" } },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -24,7 +26,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body>{children}</body>
+      <body>
+        <HackClubBanner />
+        {children}
+      </body>
     </html>
   );
 }
