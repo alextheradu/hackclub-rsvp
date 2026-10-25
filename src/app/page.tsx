@@ -36,8 +36,7 @@ export default function Home() {
           One RSVP for every <em>Hack Club</em> event.
         </h1>
         <p className={styles.lede}>
-          Create an event, collect RSVPs, run the waitlist and check people in
-          with a QR code.
+          Create an event, share the link, and track RSVPs.
         </p>
         <a className={styles.cta} href="/login">
           Sign in with Hack Club
