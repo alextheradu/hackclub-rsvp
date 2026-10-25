@@ -3,7 +3,7 @@ import SideRays from "@/components/GradientASCII/SideRays";
 
 export default function Home() {
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-no-overscroll>
       <div className={styles.background}>
         <SideRays
           rayColor1="#ff8fa0"
