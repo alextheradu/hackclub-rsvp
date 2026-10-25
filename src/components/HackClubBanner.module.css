@@ -1,15 +1,34 @@
 .wrap {
   position: absolute;
-  top: -10px;
+  top: 0;
   left: 16px;
   z-index: 50;
   width: clamp(120px, 20vw, 220px);
 }
 
 .link {
+  position: relative;
   display: block;
   transform-origin: 14% 0;
   will-change: transform;
+}
+
+.link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 80px;
+  background: linear-gradient(
+    to right,
+    transparent 0 1.25%,
+    #17171c 1.25% 2.41%,
+    #fff 2.41% 25.36%,
+    #17171c 25.36% 26.43%,
+    transparent 26.43%
+  );
+  pointer-events: none;
 }
 
 .image {
