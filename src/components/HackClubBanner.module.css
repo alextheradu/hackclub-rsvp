@@ -1,6 +1,6 @@
 .wrap {
   position: absolute;
-  top: 0;
+  top: -10px;
   left: 16px;
   z-index: 50;
   width: clamp(120px, 20vw, 220px);

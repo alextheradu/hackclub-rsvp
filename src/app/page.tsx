@@ -5,23 +5,23 @@ export default function Home() {
   return (
     <div className={styles.page}>
       <div className={styles.background}>
-  <SideRays
-    rayColor1="#ff8fa0"
-    rayColor2="#ec3750"
-    origin="top-left"
-    speed={3.7}
-    intensity={2.75}
-    spread={2.65}
-    density={6}
-    followMouse={true}
-    blend={0.43}
-    sharpness={0.14}
-    tilt={8}
-    falloff={1.05}
-    glow={2}
-    saturation={1.1}
-    mouseInfluence={0.59}
-/>
+        <SideRays
+          rayColor1="#ff8fa0"
+          rayColor2="#ec3750"
+          origin="top-left"
+          speed={3.7}
+          intensity={2.75}
+          spread={2.65}
+          density={6}
+          followMouse={true}
+          blend={0.43}
+          sharpness={0.14}
+          tilt={8}
+          falloff={1.05}
+          glow={2}
+          saturation={1.1}
+          mouseInfluence={0.59}
+        />
       </div>
       <div className={styles.scrim} />
 
@@ -30,7 +30,6 @@ export default function Home() {
           hackclub<span>.rsvp</span>
         </span>
       </header> */}
-
       <main className={styles.hero}>
         <h1 className={styles.title}>
           One RSVP for every <em>Hack Club</em> event.

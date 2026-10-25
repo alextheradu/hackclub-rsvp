@@ -33,7 +33,6 @@ export default function HackClubBanner() {
     };
 
     const onPointerMove = (event: PointerEvent) => {
-      // measure the static wrapper, the link itself is rotating
       const box = wrap.getBoundingClientRect();
       const dx = (event.clientX - (box.left + box.width / 2)) / (window.innerWidth / 2);
       const clamped = Math.max(-1, Math.min(1, dx));

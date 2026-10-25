@@ -5,11 +5,6 @@ import pg from "pg";
 
 const LOCK_ID = 727001;
 
-/**
- * @param {import("pg").Pool} pool
- * @param {string} dir
- * @returns {Promise<string[]>}
- */
 export async function runMigrations(pool, dir) {
   const client = await pool.connect();
   try {
