@@ -25,6 +25,7 @@
 *.pem
 AGENTS.md
 .playwright-mcp
+docs/superpowers
 
 # debug
 npm-debug.log*
@@ -42,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vitest json reports
+.vitest
