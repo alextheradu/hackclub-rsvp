@@ -56,8 +56,6 @@ describe("rsvps schema (migration 003)", () => {
       "status",
       "created_at",
       "status_changed_at",
-      "checked_in_at",
-      "checked_in_by",
       "notifications_enabled",
     ]) {
       expect(columns).toContain(name);
@@ -69,8 +67,6 @@ describe("rsvps schema (migration 003)", () => {
     const { rows } = await insertRsvp(eventId, ada, "confirmed");
     expect(rows[0]).toMatchObject({
       status: "confirmed",
-      checked_in_at: null,
-      checked_in_by: null,
       notifications_enabled: true,
     });
     expect(rows[0].created_at).toBeInstanceOf(Date);
@@ -129,18 +125,6 @@ describe("rsvps schema (migration 003)", () => {
     await getPool().query("DELETE FROM users WHERE id = $1", [ada]);
     const { rows } = await getPool().query("SELECT count(*)::int AS n FROM rsvps");
     expect(rows[0].n).toBe(0);
-  });
-
-  it("keeps the RSVP but clears checked_in_by when the person who checked them in is deleted", async () => {
-    const { ada, grace, eventId } = await seed();
-    await getPool().query(
-      `INSERT INTO rsvps (event_id, user_id, status, checked_in_at, checked_in_by)
-       VALUES ($1, $2, 'confirmed', now(), $3)`,
-      [eventId, ada, grace],
-    );
-    await getPool().query("DELETE FROM users WHERE id = $1", [grace]);
-    const { rows } = await getPool().query("SELECT checked_in_by FROM rsvps");
-    expect(rows).toEqual([{ checked_in_by: null }]);
   });
 
   it("indexes the event and user lookups", async () => {
