@@ -40,8 +40,8 @@ export async function userFromSessionToken(
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const store = await cookies();
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new Error("SESSION_SECRET is not set");
-  const store = await cookies();
   return userFromSessionToken(store.get("session")?.value, secret);
 }
