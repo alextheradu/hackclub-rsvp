@@ -4,6 +4,7 @@ import { closePool, getPool } from "@/lib/db";
 import {
   createEvent,
   createOrg,
+  isEventSlugTaken,
   listEventsForUser,
   listOrgsForUser,
   type NewEvent,
@@ -264,5 +265,15 @@ describe("listOrgsForUser", () => {
 
   it("returns an empty list for a user with no orgs", async () => {
     expect(await listOrgsForUser(await makeUser())).toEqual([]);
+  });
+});
+
+describe("isEventSlugTaken", () => {
+  it("is true only for slugs that exist", async () => {
+    const userId = await makeUser();
+    const orgId = await makeOrg(userId);
+    await createEvent(userId, eventInput(orgId, { slug: "already-here" }));
+    expect(await isEventSlugTaken("already-here")).toBe(true);
+    expect(await isEventSlugTaken("still-free")).toBe(false);
   });
 });

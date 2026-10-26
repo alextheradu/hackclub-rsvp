@@ -173,3 +173,8 @@ export async function listOrgsForUser(userId: number): Promise<OrgSummary[]> {
   );
   return rows.map((row) => ({ id: Number(row.id), name: row.name, slug: row.slug }));
 }
+
+export async function isEventSlugTaken(slug: string): Promise<boolean> {
+  const { rowCount } = await getPool().query("SELECT 1 FROM events WHERE slug = $1", [slug]);
+  return rowCount !== 0;
+}
