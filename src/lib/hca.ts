@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
+const TOKEN_URL = "https://auth.hackclub.com/oauth/token";
 const AUTHORIZE_URL = "https://auth.hackclub.com/oauth/authorize";
 const SCOPE = "openid profile email name slack_id verification_status";
 
@@ -51,7 +52,27 @@ export function safeReturnTo(raw: string | null): string {
 export async function exchangeCode(
   code: string,
 ): Promise<{ accessToken: string }> {
-  throw new Error("not implemented");
+  const res = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      client_id: process.env.HCA_CLIENT_ID ?? "",
+      client_secret: process.env.HCA_CLIENT_SECRET ?? "",
+      redirect_uri: process.env.HCA_REDIRECT_URI ?? "",
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`HCA token exchange failed with status ${res.status}`);
+  }
+  const data = await res.json();
+  if (typeof data.access_token !== "string") {
+    throw new Error("HCA token response had no access_token");
+  }
+  return { accessToken: data.access_token };
 }
 
 export async function fetchUserinfo(accessToken: string): Promise<HcaProfile> {
