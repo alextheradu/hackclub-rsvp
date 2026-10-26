@@ -35,16 +35,14 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
   if (!event) notFound();
 
   const isIrl = event.kind === "irl";
+  const [date, time] = formatEventWhen(event.startsAt, event.endsAt, event.timezone).split(" · ");
 
   return (
     <main className={styles.page}>
-      <article className={styles.card}>
-        <div className={styles.meta}>
-          <span className={`${styles.chip} ${isIrl ? styles.irl : styles.ysws}`}>
-            {isIrl ? "IRL" : "YSWS"}
-          </span>
-          <span className={styles.org}>{event.orgName}</span>
-        </div>
+      <article className={styles.event}>
+        <p className={styles.eyebrow}>
+          {event.orgName} · {isIrl ? "In person" : "Online program"}
+        </p>
 
         <h1 className={styles.title}>{event.title}</h1>
 
@@ -54,50 +52,35 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
           </p>
         )}
 
-        <dl className={styles.facts}>
-          <div>
-            <dt>When</dt>
-            <dd className={styles.mono}>
-              {formatEventWhen(event.startsAt, event.endsAt, event.timezone)}
-            </dd>
+        <div className={styles.when}>
+          <p className={styles.date}>{date}</p>
+          {time && <p className={styles.time}>{time}</p>}
+        </div>
+
+        {(event.locationDisplay || event.onlineUrl || event.website) && (
+          <div className={styles.details}>
+            {event.locationDisplay && <p>{event.locationDisplay}</p>}
+            {event.onlineUrl && (
+              <a href={event.onlineUrl} rel="noopener noreferrer nofollow" target="_blank">
+                {new URL(event.onlineUrl).host}
+              </a>
+            )}
+            {event.website && (
+              <a href={event.website} rel="noopener noreferrer nofollow" target="_blank">
+                {new URL(event.website).host}
+              </a>
+            )}
           </div>
-          {event.locationDisplay && (
-            <div>
-              <dt>Where</dt>
-              <dd>{event.locationDisplay}</dd>
-            </div>
-          )}
-          {event.onlineUrl && (
-            <div>
-              <dt>Online</dt>
-              <dd>
-                <a href={event.onlineUrl} rel="noopener noreferrer nofollow" target="_blank">
-                  {new URL(event.onlineUrl).host}
-                </a>
-              </dd>
-            </div>
-          )}
-          {event.website && (
-            <div>
-              <dt>Program</dt>
-              <dd>
-                <a href={event.website} rel="noopener noreferrer nofollow" target="_blank">
-                  {new URL(event.website).host}
-                </a>
-              </dd>
-            </div>
-          )}
-          {event.capacity && (
-            <div>
-              <dt>Spots</dt>
-              <dd className={styles.mono}>{event.capacity}</dd>
-            </div>
-          )}
-        </dl>
+        )}
 
         {event.description && <p className={styles.description}>{event.description}</p>}
 
-        {!event.cancelled && <p className={styles.soon}>RSVPs are not open yet.</p>}
+        {!event.cancelled && (
+          <div className={styles.action}>
+            {event.capacity && <p className={styles.spots}>{event.capacity} spots</p>}
+            <p className={styles.soon}>RSVPs are not open yet.</p>
+          </div>
+        )}
       </article>
     </main>
   );

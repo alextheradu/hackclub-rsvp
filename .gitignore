@@ -29,6 +29,7 @@ docs/superpowers
 references
 DESIGN.md
 docs/api.md
+PRODUCT.md
 
 # debug
 npm-debug.log*

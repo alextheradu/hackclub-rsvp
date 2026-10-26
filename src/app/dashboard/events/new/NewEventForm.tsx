@@ -61,7 +61,7 @@ export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
         <span id="kind-label" className={styles.label}>
           What are you running?
         </span>
-        <label className={`${styles.kind} ${styles.ysws}`}>
+        <label className={styles.kind}>
           <input
             type="radio"
             name="kind"
@@ -72,7 +72,7 @@ export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
           <span className={styles.kindName}>YSWS program</span>
           <span className={styles.kindHint}>Online. Lives at your-name.hackclub.rsvp</span>
         </label>
-        <label className={`${styles.kind} ${styles.irl}`}>
+        <label className={styles.kind}>
           <input
             type="radio"
             name="kind"

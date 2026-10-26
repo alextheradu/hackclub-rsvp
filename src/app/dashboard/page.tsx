@@ -33,16 +33,15 @@ function EventRow({ event }: { event: EventSummary }) {
         <div className={styles.rowMain}>
           <span className={styles.rowTitle}>{event.title}</span>
           <span className={styles.rowMeta}>
-            {event.orgName} · <span className={styles.mono}>{formatStart(event)}</span>
+            {event.orgName} · {formatStart(event)}
           </span>
         </div>
         <div className={styles.rowSide}>
-          {event.cancelled && <span className={`${styles.chip} ${styles.cancelled}`}>Cancelled</span>}
-          <span className={`${styles.chip} ${event.kind === "irl" ? styles.irl : styles.ysws}`}>
-            {event.kind === "irl" ? "IRL" : "YSWS"}
+          <span className={event.cancelled ? styles.cancelled : undefined}>
+            {event.cancelled ? "Cancelled" : event.kind === "irl" ? "In person" : "Online"}
           </span>
           <span className={styles.arrow} aria-hidden="true">
-            ↗
+            ›
           </span>
         </div>
       </a>

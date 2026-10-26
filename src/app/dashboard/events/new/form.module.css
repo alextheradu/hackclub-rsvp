@@ -1,7 +1,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
   max-width: 640px;
 }
 
@@ -19,9 +19,9 @@
 }
 
 .label {
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .optional {
@@ -32,7 +32,7 @@
 
 .hint {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   min-height: 1.4em;
   overflow-wrap: anywhere;
 }
@@ -43,15 +43,15 @@
 
 .input {
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: 2px solid var(--border);
+  height: 48px;
+  padding: 0 16px;
+  border: 2px solid transparent;
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--foreground);
   font: inherit;
-  font-size: 14px;
-  transition: border-color 150ms var(--ease-out);
+  font-size: 17px;
+  transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
 }
 
 .input::placeholder {
@@ -59,18 +59,18 @@
 }
 
 .input:hover {
-  border-color: var(--line-strong);
+  background: var(--raised);
 }
 
 .input:focus-visible {
   outline: none;
-  border-color: var(--line-strong);
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgb(161 161 161 / 0.6);
+  border-color: var(--faint);
+  background: var(--surface);
 }
 
 .textarea {
   height: auto;
-  padding: 10px 12px;
+  padding: 14px 16px;
   resize: vertical;
   line-height: 1.5;
 }
@@ -92,15 +92,15 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 14px 16px;
-  border: 2px solid var(--border);
+  padding: 18px 20px;
+  border: 2px solid transparent;
   border-radius: var(--radius-card);
   background: var(--surface);
   cursor: pointer;
   transition:
     border-color 150ms var(--ease-out),
     background 150ms var(--ease-out),
-    transform 200ms var(--ease-pop);
+    transform 200ms var(--ease-out);
 }
 
 .kind input {
@@ -110,41 +110,33 @@
 }
 
 .kindName {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .kindHint {
   color: var(--muted);
-  font-size: 12.5px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
 @media (hover: hover) {
   .kind:hover {
-    border-color: var(--line-strong);
     background: var(--raised);
   }
 }
 
-.ysws:has(input:checked) {
-  border-color: var(--orange);
-}
-
-.irl:has(input:checked) {
-  border-color: var(--cyan);
-}
-
-.ysws:has(input:checked) .kindName {
-  color: var(--orange);
-}
-
-.irl:has(input:checked) .kindName {
-  color: var(--cyan);
+.kind:has(input:checked) {
+  border-color: var(--foreground);
 }
 
 .kind:has(input:focus-visible) {
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgb(161 161 161 / 0.6);
+}
+
+.kind:has(input:checked:focus-visible) {
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--faint);
 }
 
 .error {
@@ -153,7 +145,7 @@
   border-radius: var(--radius);
   background: oklch(0.66 0.2 22 / 0.12);
   color: oklch(0.82 0.1 22);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .actions {
