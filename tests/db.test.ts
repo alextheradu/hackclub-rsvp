@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
@@ -84,7 +84,8 @@ describe("test database guard", () => {
     const { rows } = await getPool().query(
       "SELECT (SELECT count(*) FROM users)::int AS users, (SELECT count(*) FROM schema_migrations)::int AS migrations",
     );
-    expect(rows[0]).toEqual({ users: 0, migrations: 1 });
+    const migrationFiles = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).length;
+    expect(rows[0]).toEqual({ users: 0, migrations: migrationFiles });
   });
 
   it("refuses a database whose name does not end in _test", () => {
