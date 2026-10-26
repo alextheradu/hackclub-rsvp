@@ -4,6 +4,7 @@ import { closePool, getPool } from "@/lib/db";
 import {
   createEvent,
   createOrg,
+  getEventBySlug,
   isEventSlugTaken,
   listEventsForUser,
   listOrgsForUser,
@@ -275,5 +276,54 @@ describe("isEventSlugTaken", () => {
     await createEvent(userId, eventInput(orgId, { slug: "already-here" }));
     expect(await isEventSlugTaken("already-here")).toBe(true);
     expect(await isEventSlugTaken("still-free")).toBe(false);
+  });
+});
+
+describe("getEventBySlug", () => {
+  it("returns the public fields of an event", async () => {
+    const userId = await makeUser();
+    const orgId = await makeOrg(userId);
+    await createEvent(
+      userId,
+      eventInput(orgId, {
+        slug: "meetup-nyc",
+        title: "Meetup NYC",
+        kind: "irl",
+        timezone: "America/New_York",
+        description: "Pizza and hacking.",
+        capacity: 40,
+        locationDisplay: "Brooklyn, NY",
+        onlineUrl: "https://meet.example.com/x",
+        endsAt: new Date("2026-12-01T12:00:00Z"),
+      }),
+    );
+    expect(await getEventBySlug("meetup-nyc")).toEqual({
+      id: expect.any(Number),
+      slug: "meetup-nyc",
+      title: "Meetup NYC",
+      kind: "irl",
+      description: "Pizza and hacking.",
+      startsAt: new Date("2026-12-01T10:00:00Z"),
+      endsAt: new Date("2026-12-01T12:00:00Z"),
+      timezone: "America/New_York",
+      locationDisplay: "Brooklyn, NY",
+      onlineUrl: "https://meet.example.com/x",
+      website: null,
+      capacity: 40,
+      cancelled: false,
+      orgName: "Club",
+    });
+  });
+
+  it("marks a cancelled event", async () => {
+    const userId = await makeUser();
+    const orgId = await makeOrg(userId);
+    await createEvent(userId, eventInput(orgId));
+    await getPool().query("UPDATE events SET cancelled_at = now()");
+    expect((await getEventBySlug("my-event"))?.cancelled).toBe(true);
+  });
+
+  it("returns null for an unknown slug", async () => {
+    expect(await getEventBySlug("nope-nope")).toBeNull();
   });
 });

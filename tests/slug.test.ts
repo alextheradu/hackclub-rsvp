@@ -13,6 +13,10 @@ const RESERVED = [
   "mail",
   "static",
   "assets",
+  "login",
+  "logout",
+  "dashboard",
+  "oauth",
 ];
 
 describe("validateSlug", () => {

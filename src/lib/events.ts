@@ -45,6 +45,23 @@ export type OrgSummary = {
   slug: string;
 };
 
+export type PublicEvent = {
+  id: number;
+  slug: string;
+  title: string;
+  kind: EventKind;
+  description: string | null;
+  startsAt: Date;
+  endsAt: Date | null;
+  timezone: string;
+  locationDisplay: string | null;
+  onlineUrl: string | null;
+  website: string | null;
+  capacity: number | null;
+  cancelled: boolean;
+  orgName: string;
+};
+
 export type EventSummary = {
   id: number;
   slug: string;
@@ -177,4 +194,34 @@ export async function listOrgsForUser(userId: number): Promise<OrgSummary[]> {
 export async function isEventSlugTaken(slug: string): Promise<boolean> {
   const { rowCount } = await getPool().query("SELECT 1 FROM events WHERE slug = $1", [slug]);
   return rowCount !== 0;
+}
+
+export async function getEventBySlug(slug: string): Promise<PublicEvent | null> {
+  const { rows } = await getPool().query(
+    `SELECT e.id, e.slug, e.title, e.kind, e.description, e.starts_at, e.ends_at,
+            e.timezone, e.location_display, e.online_url, e.website, e.capacity,
+            e.cancelled_at IS NOT NULL AS cancelled, o.name AS org_name
+     FROM events e
+     JOIN orgs o ON o.id = e.org_id
+     WHERE e.slug = $1`,
+    [slug],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    id: Number(row.id),
+    slug: row.slug,
+    title: row.title,
+    kind: row.kind,
+    description: row.description,
+    startsAt: row.starts_at,
+    endsAt: row.ends_at,
+    timezone: row.timezone,
+    locationDisplay: row.location_display,
+    onlineUrl: row.online_url,
+    website: row.website,
+    capacity: row.capacity,
+    cancelled: row.cancelled,
+    orgName: row.org_name,
+  };
 }

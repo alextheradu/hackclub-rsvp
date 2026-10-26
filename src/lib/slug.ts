@@ -3,7 +3,7 @@ export type SlugResult = { ok: true } | { ok: false; reason: "format" | "reserve
 export type EventKind = "ysws" | "irl";
 
 const SLUG_FORMAT = /^[a-z0-9-]{3,40}$/;
-const RESERVED = new Set(["www", "origin", "domains", "events", "dev", "app", "admin", "mail", "static", "api", "assets"])
+const RESERVED = new Set(["www", "origin", "domains", "events", "dev", "app", "admin", "mail", "static", "api", "assets", "e", "login", "logout", "dashboard", "oauth"])
 export function validateSlug(slug: string): SlugResult {
   if(!SLUG_FORMAT.test(slug)) {
     return { ok: false, reason: "format" };
