@@ -3,7 +3,7 @@
   top: 0;
   left: 16px;
   z-index: 50;
-  width: clamp(120px, 20vw, 220px);
+  width: var(--banner-width);
 }
 
 .link {

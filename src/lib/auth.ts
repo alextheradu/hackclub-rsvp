@@ -1,6 +1,7 @@
 import { verifySession } from "@/lib/session";
 import { getPool } from "./db";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 export type CurrentUser = {
   id: number;
@@ -41,6 +42,7 @@ export async function userFromSessionToken(
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const store = await cookies();
+  await connection();
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new Error("SESSION_SECRET is not set");
   return userFromSessionToken(store.get("session")?.value, secret);

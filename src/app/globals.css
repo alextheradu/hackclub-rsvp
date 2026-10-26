@@ -1,12 +1,21 @@
 :root {
-  --background: #0f0a0c;
+  --background: #000000;
   --surface: #1a1215;
   --border: #2e2226;
   --foreground: #f3eef0;
   --muted: #a99ba0;
   --accent: #ec3750;
   --accent-hover: #ff4d66;
+  --raised: #221920;
+  --line-strong: #43343a;
+  --faint: #75676c;
+  --cyan: #5bc0de;
+  --orange: #ff8c37;
   --radius: 10px;
+  --radius-card: 16px;
+  --banner-width: clamp(84px, 13vw, 140px);
+  --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-pop: cubic-bezier(0.3, 1.6, 0.6, 1);
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
