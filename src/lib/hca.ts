@@ -76,5 +76,17 @@ export async function exchangeCode(
 }
 
 export async function fetchUserinfo(accessToken: string): Promise<HcaProfile> {
-  throw new Error("not implemented");
+  const res = await fetch("https://auth.hackclub.com/oauth/userinfo", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`HCA userinfo fetch failed with status ${res.status}`);
+  }
+  const data = await res.json();
+  if (typeof data.sub !== "string") {
+    throw new Error("HCA userinfo response had no sub");
+  }
+  return data as HcaProfile;
 }
