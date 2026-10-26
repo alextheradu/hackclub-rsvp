@@ -27,6 +27,7 @@ AGENTS.md
 .playwright-mcp
 docs/superpowers
 references
+DESIGN.md
 
 # debug
 npm-debug.log*
