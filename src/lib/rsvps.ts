@@ -1,4 +1,4 @@
-import { withTx } from "@/lib/db";
+import { getPool, withTx } from "@/lib/db";
 import { decideStatus, promotionCount } from "@/lib/waitlist";
 
 export type CreateRsvpResult =
@@ -90,4 +90,35 @@ export async function cancelRsvp(eventId: number, userId: number): Promise<{ pro
     );
     return { promoted: next.map((row) => Number(row.user_id)) };
   });
+}
+
+export type RsvpSummary = {
+  confirmedCount: number;
+  waitlistedCount: number;
+  myStatus: "confirmed" | "waitlisted" | null;
+};
+
+export async function getRsvpSummary(eventId: number, userId: number | null): Promise<RsvpSummary> {
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
+            count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
+     FROM rsvps WHERE event_id = $1`,
+    [eventId],
+  );
+
+  let myStatus: RsvpSummary["myStatus"] = null;
+  if(userId !== null) {
+    const { rows: mine } = await pool.query(
+      "SELECT status FROM rsvps WHERE event_id = $1 AND user_id = $2 AND status <> 'cancelled'",
+      [eventId, userId],
+    );
+    myStatus = mine[0]?.status ?? null;
+  }
+
+  return {
+    confirmedCount: rows[0].confirmed,
+    waitlistedCount: rows[0].waitlisted,
+    myStatus,
+  };
 }

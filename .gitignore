@@ -28,6 +28,7 @@ AGENTS.md
 docs/superpowers
 references
 DESIGN.md
+docs/api.md
 
 # debug
 npm-debug.log*

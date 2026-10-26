@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
-import { cancelRsvp, createRsvp } from "@/lib/rsvps";
+import { cancelRsvp, createRsvp, getRsvpSummary } from "@/lib/rsvps";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
 
@@ -228,5 +228,58 @@ describe("cancelRsvp", () => {
     for (const user of users) await createRsvp(eventId, user);
     await Promise.all(users.slice(0, 3).map((user) => cancelRsvp(eventId, user)));
     expect(await statuses(eventId)).toMatchObject({ confirmed: 3, waitlisted: 2, cancelled: 3 });
+  });
+});
+
+describe("getRsvpSummary", () => {
+  it("counts confirmed and waitlisted, ignoring cancelled", async () => {
+    const { eventId } = await makeEvent({ capacity: 2 });
+    const [a, b, c, d] = await makeUsers(4);
+    await createRsvp(eventId, a);
+    await createRsvp(eventId, b);
+    await createRsvp(eventId, c);
+    await createRsvp(eventId, d);
+    await cancelRsvp(eventId, d);
+    expect(await getRsvpSummary(eventId, null)).toEqual({
+      confirmedCount: 2,
+      waitlistedCount: 1,
+      myStatus: null,
+    });
+  });
+
+  it("returns zeros for an event with no RSVPs", async () => {
+    const { eventId } = await makeEvent();
+    expect(await getRsvpSummary(eventId, null)).toEqual({
+      confirmedCount: 0,
+      waitlistedCount: 0,
+      myStatus: null,
+    });
+  });
+
+  it("reports the signed-in user's own status", async () => {
+    const { eventId } = await makeEvent({ capacity: 1 });
+    const [a, b, c] = await makeUsers(3);
+    await createRsvp(eventId, a);
+    await createRsvp(eventId, b);
+    expect((await getRsvpSummary(eventId, a)).myStatus).toBe("confirmed");
+    expect((await getRsvpSummary(eventId, b)).myStatus).toBe("waitlisted");
+    expect((await getRsvpSummary(eventId, c)).myStatus).toBeNull();
+  });
+
+  it("does not report a cancelled RSVP as the user's status", async () => {
+    const { eventId } = await makeEvent();
+    const [a] = await makeUsers(1);
+    await createRsvp(eventId, a);
+    await cancelRsvp(eventId, a);
+    expect((await getRsvpSummary(eventId, a)).myStatus).toBeNull();
+  });
+
+  it("returns numbers, not strings", async () => {
+    const { eventId } = await makeEvent();
+    const [a] = await makeUsers(1);
+    await createRsvp(eventId, a);
+    const summary = await getRsvpSummary(eventId, a);
+    expect(typeof summary.confirmedCount).toBe("number");
+    expect(typeof summary.waitlistedCount).toBe("number");
   });
 });
