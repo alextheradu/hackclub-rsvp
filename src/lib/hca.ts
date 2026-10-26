@@ -1,4 +1,7 @@
-import { timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "node:crypto";
+
+const AUTHORIZE_URL = "https://auth.hackclub.com/oauth/authorize";
+const SCOPE = "openid profile email name slack_id verification_status";
 
 export type HcaProfile = {
   sub: string;
@@ -14,7 +17,17 @@ export type HcaProfile = {
 };
 
 export function buildAuthorizeUrl(state: string): string {
-  throw new Error("not implemented");
+  const clientId = process.env.HCA_CLIENT_ID;
+  const redirectUri = process.env.HCA_REDIRECT_URI;
+  if (!clientId || !redirectUri)
+    throw new Error("HCA_CLIENT_ID and HCA_REDIRECT_URI must be set");
+  const url = new URL(AUTHORIZE_URL);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", SCOPE);
+  url.searchParams.set("state", state);
+  return url.toString();
 }
 
 export function checkState(
@@ -24,7 +37,7 @@ export function checkState(
   if (!cookie || !param) return false;
   const a = Buffer.from(cookie);
   const b = Buffer.from(param);
-  if( a.length !== b.length) return false;
+  if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
 
