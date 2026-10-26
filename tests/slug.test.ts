@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eventUrl, unfurlUrl, validateSlug } from "@/lib/slug";
+import { eventUrl, slugify, unfurlUrl, validateSlug } from "@/lib/slug";
 
 const RESERVED = [
   "www",
@@ -61,5 +61,36 @@ describe("eventUrl", () => {
 describe("unfurlUrl", () => {
   it("lives on the apex domain", () => {
     expect(unfurlUrl("my-ysws")).toBe("https://hackclub.rsvp/my-ysws");
+  });
+});
+
+describe("slugify", () => {
+  it.each([
+    ["My Event 2026", "my-event-2026"],
+    ["  Hello,   World!  ", "hello-world"],
+    ["Café Hack Night", "cafe-hack-night"],
+    ["a--b__c", "a-b-c"],
+    ["---abc---", "abc"],
+    ["Summer of Making: Launch Party (NYC)", "summer-of-making-launch-party-nyc"],
+  ])("turns %j into %j", (input, expected) => {
+    expect(slugify(input)).toBe(expected);
+  });
+
+  it("returns an empty string when nothing usable is left", () => {
+    expect(slugify("!!!")).toBe("");
+    expect(slugify("日本語")).toBe("");
+    expect(slugify("")).toBe("");
+  });
+
+  it("caps the slug at 40 characters", () => {
+    expect(slugify("a".repeat(30) + " " + "b".repeat(30))).toBe("a".repeat(30) + "-" + "b".repeat(9));
+  });
+
+  it("never leaves a trailing hyphen after cutting at 40", () => {
+    expect(slugify("a".repeat(39) + " bbb")).toBe("a".repeat(39));
+  });
+
+  it("produces something validateSlug accepts for a normal title", () => {
+    expect(validateSlug(slugify("Boston Hack Night"))).toEqual({ ok: true });
   });
 });

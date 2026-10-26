@@ -1,7 +1,13 @@
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
-import { createEvent, createOrg, listEventsForUser, type NewEvent } from "@/lib/events";
+import {
+  createEvent,
+  createOrg,
+  listEventsForUser,
+  listOrgsForUser,
+  type NewEvent,
+} from "@/lib/events";
 import { upsertUser } from "@/lib/users";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
@@ -240,5 +246,23 @@ describe("listEventsForUser", () => {
   it("returns an empty list for a user with no orgs", async () => {
     const userId = await makeUser();
     expect(await listEventsForUser(userId)).toEqual([]);
+  });
+});
+
+describe("listOrgsForUser", () => {
+  it("lists only the user's orgs, by name", async () => {
+    const ada = await makeUser();
+    const grace = await makeUser("ident!grace", "grace@example.com");
+    await createOrg(ada, { name: "zebra club", slug: "zebra-club" });
+    await createOrg(ada, { name: "Alpha Club", slug: "alpha-club" });
+    await createOrg(grace, { name: "Not Yours", slug: "not-yours" });
+    expect(await listOrgsForUser(ada)).toEqual([
+      { id: expect.any(Number), name: "Alpha Club", slug: "alpha-club" },
+      { id: expect.any(Number), name: "zebra club", slug: "zebra-club" },
+    ]);
+  });
+
+  it("returns an empty list for a user with no orgs", async () => {
+    expect(await listOrgsForUser(await makeUser())).toEqual([]);
   });
 });

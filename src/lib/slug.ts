@@ -26,3 +26,14 @@ export function eventUrl(event: { kind: EventKind; slug: string }): string {
 export function unfurlUrl(slug: string): string {
   return `https://${ROOT_DOMAIN}/${slug}`;
 }
+
+export function slugify(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/g, "");
+}

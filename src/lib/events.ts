@@ -39,6 +39,12 @@ export type CreateEventResult =
         | "not_member";
     };
 
+export type OrgSummary = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
 export type EventSummary = {
   id: number;
   slug: string;
@@ -154,4 +160,16 @@ export async function listEventsForUser(
     orgName: row.org_name,
     cancelled: row.cancelled,
   }));
+}
+
+export async function listOrgsForUser(userId: number): Promise<OrgSummary[]> {
+  const { rows } = await getPool().query(
+    `SELECT o.id, o.name, o.slug
+     FROM orgs o
+     JOIN org_members m ON m.org_id = o.id
+     WHERE m.user_id = $1
+     ORDER BY lower(o.name), o.id`,
+    [userId],
+  );
+  return rows.map((row) => ({ id: Number(row.id), name: row.name, slug: row.slug }));
 }
