@@ -7,11 +7,11 @@ import {upsertUser} from "@/lib/users";
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 
 export async function GET(request: Request) {
+    const store = await cookies();
     const secret = process.env.SESSION_SECRET;
     if (!secret) throw new Error("SESSION_SECRET is not set");
 
     const params = new URL(request.url).searchParams;
-    const store = await cookies();
     if (!checkState(store.get("hca_state")?.value, params.get("state"))) {
         return new Response("Invalid state", {status: 400});
     }

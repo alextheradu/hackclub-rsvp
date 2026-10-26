@@ -4,9 +4,9 @@ import {redirect} from "next/navigation";
 import {buildAuthorizeUrl, safeReturnTo} from "@/lib/hca";
 
 export async function GET(request: Request) {
+    const store = await cookies();
     const returnTo = safeReturnTo(new URL(request.url).searchParams.get("returnTo"));
     const state = randomBytes(32).toString("base64url");
-    const store = await cookies();
     const cookieOptions = {
         httpOnly: true,
         sameSite: "lax",
