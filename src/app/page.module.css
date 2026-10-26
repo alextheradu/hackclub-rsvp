@@ -76,8 +76,9 @@
 .cta {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   height: 48px;
-  padding: 0 24px;
+  padding: 0 24px 0 20px;
   border-radius: var(--radius);
   background: var(--accent);
   color: #fff;
@@ -87,4 +88,24 @@
 
 .cta:hover {
   background: var(--accent-hover);
+}
+
+.ctaIcon {
+  width: auto;
+  height: 22px;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cta:hover .ctaIcon {
+  transform: rotate(-12deg) scale(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctaIcon {
+    transition: none;
+  }
+
+  .cta:hover .ctaIcon {
+    transform: none;
+  }
 }

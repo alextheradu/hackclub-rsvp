@@ -1,3 +1,4 @@
+import Image from "next/image";
 import styles from "./page.module.css";
 import SideRays from "@/components/SideRays/SideRays";
 
@@ -38,6 +39,14 @@ export default function Home() {
           Create an event, share the link, and track RSVPs.
         </p>
         <a className={styles.cta} href="/login">
+          <Image
+            className={styles.ctaIcon}
+            src="/hackclub-mark.svg"
+            alt=""
+            width={14}
+            height={23}
+            unoptimized
+          />
           Sign in with Hack Club
         </a>
       </main>
