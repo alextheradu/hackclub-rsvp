@@ -1,5 +1,5 @@
 import styles from "./page.module.css";
-import SideRays from "@/components/GradientASCII/SideRays";
+import SideRays from "@/components/SideRays/SideRays";
 
 export default function Home() {
   return (
