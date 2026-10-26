@@ -34,5 +34,5 @@ export async function upsertUser(
       profile.ysws_eligible,
     ],
   );
-  return { id: rows[0].id, isNew: rows[0].is_new };
+  return { id: Number(rows[0].id), isNew: rows[0].is_new };
 }
