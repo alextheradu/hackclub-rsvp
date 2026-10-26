@@ -7,11 +7,11 @@ export default function Home() {
     <div className={styles.page} data-no-overscroll>
       <div className={styles.background}>
         <SideRays
-          rayColor1="#c8c8cc"
-          rayColor2="#6e6e73"
+          rayColor1="#ff8fa0"
+          rayColor2="#ec3750"
           origin="top-left"
           speed={3.7}
-          intensity={1.6}
+          intensity={2.75}
           spread={2.65}
           density={6}
           followMouse={true}
