@@ -1,6 +1,10 @@
+"use client";
+
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import buttons from "@/components/buttons.module.css";
 import type { RsvpButtonState } from "@/lib/rsvp-state";
-import { cancelAction, rsvpAction } from "./actions";
+import { cancelAction, rsvpAction, type RsvpFormState } from "./actions";
 import styles from "./page.module.css";
 
 type Props = {
@@ -18,7 +22,25 @@ const NOTES: Partial<Record<RsvpButtonState, string>> = {
   closed: "RSVPs are closed.",
 };
 
+function SubmitButton({ idle, pending, variant }: { idle: string; pending: string; variant: "primary" | "ghost" }) {
+  const status = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      className={`${buttons.btn} ${buttons[variant]}`}
+      disabled={status.pending}
+    >
+      {status.pending ? pending : idle}
+    </button>
+  );
+}
+
 export function RsvpAction({ slug, state, capacity, confirmedCount, waitlistedCount }: Props) {
+  const [form, formAction] = useActionState(rsvpAction.bind(null, slug), {
+    message: null,
+  } as RsvpFormState);
+
   if (state === "cancelled") return null;
 
   const spotsLeft = capacity === null ? null : Math.max(capacity - confirmedCount, 0);
@@ -32,29 +54,31 @@ export function RsvpAction({ slug, state, capacity, confirmedCount, waitlistedCo
         {waitlistedCount > 0 && ` · ${waitlistedCount} waitlisted`}
       </p>
 
-      {state === "open" || state === "signed_out" ? (
-        <form action={rsvpAction.bind(null, slug)}>
-          <button type="submit" className={`${buttons.btn} ${buttons.primary}`}>
-            RSVP
-          </button>
-        </form>
-      ) : null}
-
-      {state === "full" ? (
-        <form action={rsvpAction.bind(null, slug)}>
-          <button type="submit" className={`${buttons.btn} ${buttons.primary}`}>
-            Join waitlist
-          </button>
+      {state === "open" || state === "signed_out" || state === "full" ? (
+        <form action={formAction}>
+          <SubmitButton
+            idle={state === "full" ? "Join waitlist" : "RSVP"}
+            pending="One sec…"
+            variant="primary"
+          />
         </form>
       ) : null}
 
       {state === "confirmed" || state === "waitlisted" ? (
         <form action={cancelAction.bind(null, slug)}>
-          <button type="submit" className={`${buttons.btn} ${buttons.ghost}`}>
-            {state === "confirmed" ? "Cancel RSVP" : "Leave waitlist"}
-          </button>
+          <SubmitButton
+            idle={state === "confirmed" ? "Cancel RSVP" : "Leave waitlist"}
+            pending="Cancelling…"
+            variant="ghost"
+          />
         </form>
       ) : null}
+
+      {form.message && (
+        <p className={styles.soon} role="alert">
+          {form.message}
+        </p>
+      )}
 
       {NOTES[state] && <p className={styles.soon}>{NOTES[state]}</p>}
     </div>
