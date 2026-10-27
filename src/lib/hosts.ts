@@ -1,6 +1,5 @@
+import { rootDomain } from "@/lib/domain";
 import { validateSlug } from "@/lib/slug";
-
-const ROOT = "hackclub.rsvp";
 
 function rewriteFirstSegment(pathname: string): string | null {
   const [, first, ...rest] = pathname.split("/");
@@ -8,7 +7,11 @@ function rewriteFirstSegment(pathname: string): string | null {
   return ["/e", first, ...rest].join("/");
 }
 
-export function rewriteTarget(host: string, pathname: string): string | null {
+export function rewriteTarget(
+  host: string,
+  pathname: string,
+  ROOT: string = rootDomain(),
+): string | null {
   const hostname = host.toLowerCase().split(":")[0];
 
   if (hostname === ROOT || hostname === `events.${ROOT}`) {

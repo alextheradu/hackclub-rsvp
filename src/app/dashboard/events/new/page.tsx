@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { rootDomain } from "@/lib/domain";
 import { listOrgsForUser } from "@/lib/events";
 import { TopBar } from "../../_components/TopBar";
 import styles from "../../page.module.css";
@@ -23,7 +24,7 @@ async function NewEventContent() {
             <p className={styles.sub}>Pick a kind, name it, and share the link.</p>
           </div>
         </div>
-        <NewEventForm orgs={orgs} />
+        <NewEventForm orgs={orgs} root={rootDomain()} />
       </main>
     </>
   );

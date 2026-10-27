@@ -55,6 +55,12 @@ describe("eventUrl", () => {
     expect(eventUrl({ kind: "ysws", slug: "my-ysws" })).toBe("https://hackclub.rsvp/my-ysws");
     expect(eventUrl({ kind: "irl", slug: "my-meetup" })).toBe("https://hackclub.rsvp/my-meetup");
   });
+
+  it("uses a custom root domain", () => {
+    expect(eventUrl({ kind: "ysws", slug: "my-ysws" }, "dev.hackclub.rsvp")).toBe(
+      "https://dev.hackclub.rsvp/my-ysws",
+    );
+  });
 });
 
 describe("unfurlUrl", () => {

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { listEventsForUser, type EventSummary } from "@/lib/events";
+import { rootDomain } from "@/lib/domain";
 import { eventUrl } from "@/lib/slug";
 import buttons from "@/components/buttons.module.css";
 import { TopBar } from "./_components/TopBar";
@@ -29,7 +30,7 @@ function formatStart(event: EventSummary): string {
 function EventRow({ event }: { event: EventSummary }) {
   return (
     <li>
-      <a className={styles.row} href={eventUrl(event)}>
+      <a className={styles.row} href={eventUrl(event, rootDomain())}>
         <div className={styles.rowMain}>
           <span className={styles.rowTitle}>{event.title}</span>
           <span className={styles.rowMeta}>

@@ -1,10 +1,15 @@
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { rootDomain } from "@/lib/domain";
 import { getEventBySlug } from "@/lib/events";
 import { formatEventWhen } from "@/lib/format";
+import { rsvpButtonState } from "@/lib/rsvp-state";
+import { getRsvpSummary } from "@/lib/rsvps";
 import { eventUrl, validateSlug } from "@/lib/slug";
 import styles from "./page.module.css";
+import { RsvpAction } from "./RsvpAction";
 
 export const instant = false;
 
@@ -22,11 +27,37 @@ export async function generateMetadata({
   const when = formatEventWhen(event.startsAt, event.endsAt, event.timezone);
   const description = event.description?.slice(0, 200) || `${event.orgName} · ${when}`;
   return {
-    title: `${event.title} · hackclub.rsvp`,
+    title: `${event.title} · ${rootDomain()}`,
     description,
-    alternates: { canonical: eventUrl(event) },
-    openGraph: { title: event.title, description, url: eventUrl(event), type: "website" },
+    alternates: { canonical: eventUrl(event, rootDomain()) },
+    openGraph: { title: event.title, description, url: eventUrl(event, rootDomain()), type: "website" },
   };
+}
+
+type LoadedEvent = NonNullable<Awaited<ReturnType<typeof loadEvent>>>;
+
+async function RsvpSection({ event, slug }: { event: LoadedEvent; slug: string }) {
+  const user = await getCurrentUser();
+  const summary = await getRsvpSummary(event.id, user?.id ?? null);
+  const state = rsvpButtonState({
+    cancelled: event.cancelled,
+    startsAt: event.startsAt,
+    endsAt: event.endsAt,
+    capacity: event.capacity,
+    confirmedCount: summary.confirmedCount,
+    myStatus: summary.myStatus,
+    signedIn: user !== null,
+    now: new Date(),
+  });
+  return (
+    <RsvpAction
+      slug={slug}
+      state={state}
+      capacity={event.capacity}
+      confirmedCount={summary.confirmedCount}
+      waitlistedCount={summary.waitlistedCount}
+    />
+  );
 }
 
 export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
@@ -76,10 +107,9 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
         {event.description && <p className={styles.description}>{event.description}</p>}
 
         {!event.cancelled && (
-          <div className={styles.action}>
-            {event.capacity && <p className={styles.spots}>{event.capacity} spots</p>}
-            <p className={styles.soon}>RSVPs are not open yet.</p>
-          </div>
+          <Suspense fallback={<div className={styles.action} />}>
+            <RsvpSection event={event} slug={slug} />
+          </Suspense>
         )}
       </article>
     </main>

@@ -82,3 +82,19 @@ describe("rewriteTarget: other hosts", () => {
     expect(rewriteTarget(host, "/anything")).toBeNull();
   });
 });
+
+describe("rewriteTarget: custom root domain", () => {
+  const root = "dev.hackclub.rsvp";
+
+  it("serves /slug on the custom root", () => {
+    expect(rewriteTarget("dev.hackclub.rsvp", "/my-ysws", root)).toBe("/e/my-ysws");
+  });
+
+  it("serves subdomains of the custom root", () => {
+    expect(rewriteTarget("my-ysws.dev.hackclub.rsvp", "/", root)).toBe("/e/my-ysws");
+  });
+
+  it("ignores the production domain", () => {
+    expect(rewriteTarget("hackclub.rsvp", "/my-ysws", root)).toBeNull();
+  });
+});

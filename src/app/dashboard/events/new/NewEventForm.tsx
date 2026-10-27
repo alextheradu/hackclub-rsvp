@@ -24,7 +24,7 @@ function getZones(): string[] {
 const NO_ZONES: string[] = [];
 const subscribeNothing = () => () => {};
 
-export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
+export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string }) {
   const [state, formAction, pending] = useActionState(createEventAction, INITIAL);
   const { values } = state;
 
@@ -70,7 +70,7 @@ export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
             onChange={() => setKind("ysws")}
           />
           <span className={styles.kindName}>YSWS program</span>
-          <span className={styles.kindHint}>Online. Lives at your-name.hackclub.rsvp</span>
+          <span className={styles.kindHint}>Online program</span>
         </label>
         <label className={styles.kind}>
           <input
@@ -81,7 +81,7 @@ export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
             onChange={() => setKind("irl")}
           />
           <span className={styles.kindName}>IRL event</span>
-          <span className={styles.kindHint}>In person. Lives at events.hackclub.rsvp/your-name</span>
+          <span className={styles.kindHint}>In person</span>
         </label>
       </div>
 
@@ -123,7 +123,7 @@ export function NewEventForm({ orgs }: { orgs: OrgSummary[] }) {
         />
         <p className={styles.hint}>
           {effectiveSlug ? (
-            <span className={styles.mono}>{eventUrl({ kind, slug: effectiveSlug })}</span>
+            <span className={styles.mono}>{eventUrl({ kind, slug: effectiveSlug }, root)}</span>
           ) : (
             "Lowercase letters, numbers and hyphens, 3 to 40 characters."
           )}
