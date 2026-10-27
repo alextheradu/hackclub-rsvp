@@ -51,14 +51,9 @@ describe("validateSlug", () => {
 });
 
 describe("eventUrl", () => {
-  it("uses the subdomain for ysws events", () => {
-    expect(eventUrl({ kind: "ysws", slug: "my-ysws" })).toBe("https://my-ysws.hackclub.rsvp");
-  });
-
-  it("uses events.hackclub.rsvp for irl events", () => {
-    expect(eventUrl({ kind: "irl", slug: "my-meetup" })).toBe(
-      "https://events.hackclub.rsvp/my-meetup",
-    );
+  it("lives on the apex domain for every kind", () => {
+    expect(eventUrl({ kind: "ysws", slug: "my-ysws" })).toBe("https://hackclub.rsvp/my-ysws");
+    expect(eventUrl({ kind: "irl", slug: "my-meetup" })).toBe("https://hackclub.rsvp/my-meetup");
   });
 });
 

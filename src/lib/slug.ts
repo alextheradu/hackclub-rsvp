@@ -16,11 +16,10 @@ export function validateSlug(slug: string): SlugResult {
 
 const ROOT_DOMAIN = "hackclub.rsvp"
 
+// Subdomains (slug.hackclub.rsvp, events.hackclub.rsvp/slug) still route in
+// hosts.ts, but they can't be tested yet, so links use hackclub.rsvp/slug.
 export function eventUrl(event: { kind: EventKind; slug: string }): string {
-  if (event.kind === "ysws") {
-    return `https://${event.slug}.${ROOT_DOMAIN}`;
-  }
-  return `https://events.${ROOT_DOMAIN}/${event.slug}`;
+  return `https://${ROOT_DOMAIN}/${event.slug}`;
 }
 
 export function unfurlUrl(slug: string): string {
