@@ -55,6 +55,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+.calendar {
+  width: fit-content;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 15px;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px;
+  transition: color 150ms var(--ease-out), text-decoration-color 150ms var(--ease-out);
+}
+
+.calendar:hover {
+  color: var(--foreground);
+  text-decoration-color: var(--foreground);
+}
+
 .details {
   margin-top: 28px;
   display: flex;

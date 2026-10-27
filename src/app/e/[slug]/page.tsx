@@ -86,6 +86,9 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
         <div className={styles.when}>
           <p className={styles.date}>{date}</p>
           {time && <p className={styles.time}>{time}</p>}
+          <a className={styles.calendar} href={`${eventUrl(event, rootDomain())}/calendar.ics`}>
+            Add to calendar
+          </a>
         </div>
 
         {(event.locationDisplay || event.onlineUrl || event.website) && (
