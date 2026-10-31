@@ -10,6 +10,7 @@ const WANTED_STATUS: Record<EmailKind, string> = {
   rsvp_confirmed: "confirmed",
   rsvp_waitlisted: "waitlisted",
   waitlist_promoted: "confirmed",
+  event_reminder: "confirmed",
 };
 
 export function emailSender(transport: MailTransport, from: string): Sender {

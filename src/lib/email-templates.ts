@@ -1,4 +1,4 @@
-export type EmailKind = "rsvp_confirmed" | "rsvp_waitlisted" | "waitlist_promoted";
+export type EmailKind = "rsvp_confirmed" | "rsvp_waitlisted" | "waitlist_promoted" | "event_reminder";
 
 export type EmailContext = {
   name: string | null;
@@ -20,6 +20,10 @@ const COPY: Record<EmailKind, { subject: (title: string) => string; body: string
   waitlist_promoted: {
     subject: (title) => `A spot opened up: you're going to ${title}`,
     body: "Someone dropped out, so you've been moved off the waitlist. You're going!",
+  },
+  event_reminder: {
+    subject: (title) => `Tomorrow: ${title}`,
+    body: "Just a reminder that the event is tomorrow. See you there!",
   },
 };
 

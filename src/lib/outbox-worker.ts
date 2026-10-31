@@ -1,4 +1,5 @@
 import { claimDue, markFailed, markSent, type OutboxChannel, type OutboxJob } from "@/lib/outbox";
+import { queueReminders } from "@/lib/reminders";
 
 export type Sender = (job: OutboxJob) => Promise<void>;
 export type Senders = Partial<Record<OutboxChannel, Sender>>;
@@ -33,6 +34,7 @@ export function startOutboxWorker(senders: Senders, intervalMs = 10_000): void {
     if (running) return;
     running = true;
     try {
+      await queueReminders();
       const { sent, retried, dead } = await runOutboxOnce(senders);
       if (retried || dead) console.warn(`outbox: ${sent} sent, ${retried} retrying, ${dead} dead`);
     } catch (error) {
