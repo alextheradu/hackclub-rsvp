@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import HackClubBanner from "@/components/HackClubBanner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +26,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body>
-        <HackClubBanner />
         {children}
       </body>
     </html>

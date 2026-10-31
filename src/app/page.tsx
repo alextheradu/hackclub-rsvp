@@ -1,10 +1,12 @@
 import Image from "next/image";
 import styles from "./page.module.css";
+import HackClubBanner from "@/components/HackClubBanner";
 import SideRays from "@/components/SideRays/SideRays";
 
 export default function Home() {
   return (
     <div className={styles.page} data-no-overscroll>
+      <HackClubBanner />
       <div className={styles.background}>
         <SideRays
           rayColor1="#ff8fa0"
