@@ -112,3 +112,51 @@ describe("getRoster", () => {
     expect(await getRoster(organizer, eventId)).toEqual([]);
   });
 });
+
+describe("getRoster filters", () => {
+  async function seed() {
+    const ctx = await setup(1);
+    const ada = await makeUser("ada", "U_ADA");
+    const bob = await makeUser("bob");
+    const cat = await makeUser("cat");
+    await createRsvp(ctx.eventId, ada);
+    await createRsvp(ctx.eventId, bob);
+    await createRsvp(ctx.eventId, cat);
+    await cancelRsvp(ctx.eventId, cat);
+    return ctx;
+  }
+
+  it("filters by status", async () => {
+    const { organizer, eventId } = await seed();
+    const roster = await getRoster(organizer, eventId, { status: "waitlisted" });
+    expect(roster!.map((r) => r.name)).toEqual(["bob"]);
+  });
+
+  it("searches name case-insensitively", async () => {
+    const { organizer, eventId } = await seed();
+    const roster = await getRoster(organizer, eventId, { q: "ADA" });
+    expect(roster!.map((r) => r.name)).toEqual(["ada"]);
+  });
+
+  it("searches email and slack id", async () => {
+    const { organizer, eventId } = await seed();
+    expect((await getRoster(organizer, eventId, { q: "bob@example" }))!.map((r) => r.name)).toEqual(["bob"]);
+    expect((await getRoster(organizer, eventId, { q: "u_ada" }))!.map((r) => r.name)).toEqual(["ada"]);
+  });
+
+  it("treats % in the search as a literal character", async () => {
+    const { organizer, eventId } = await seed();
+    expect(await getRoster(organizer, eventId, { q: "%" })).toEqual([]);
+  });
+
+  it("combines status and search", async () => {
+    const { organizer, eventId } = await seed();
+    expect(await getRoster(organizer, eventId, { status: "confirmed", q: "bob" })).toEqual([]);
+  });
+
+  it("still returns null for an outsider when filtering", async () => {
+    const { outsider, eventId } = await seed();
+    expect(await getRoster(outsider, eventId, { status: "confirmed" })).toBeNull();
+  });
+});
+
