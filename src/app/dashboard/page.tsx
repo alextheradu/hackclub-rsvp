@@ -1,9 +1,8 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { listEventsForUser, type EventSummary } from "@/lib/events";
-import { rootDomain } from "@/lib/domain";
-import { eventUrl } from "@/lib/slug";
 import buttons from "@/components/buttons.module.css";
 import { TopBar } from "./_components/TopBar";
 import styles from "./page.module.css";
@@ -30,7 +29,7 @@ function formatStart(event: EventSummary): string {
 function EventRow({ event }: { event: EventSummary }) {
   return (
     <li>
-      <a className={styles.row} href={eventUrl(event, rootDomain())}>
+      <Link className={styles.row} href={`/dashboard/events/${event.slug}`}>
         <div className={styles.rowMain}>
           <span className={styles.rowTitle}>{event.title}</span>
           <span className={styles.rowMeta}>
@@ -45,7 +44,7 @@ function EventRow({ event }: { event: EventSummary }) {
             ›
           </span>
         </div>
-      </a>
+      </Link>
     </li>
   );
 }
@@ -70,17 +69,17 @@ async function DashboardContent() {
                 : `${events.length} ${events.length === 1 ? "event" : "events"} across your orgs.`}
             </p>
           </div>
-          <a className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
+          <Link className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
             New event
-          </a>
+          </Link>
         </div>
 
         {events.length === 0 ? (
           <div className={styles.empty}>
             <p>Create an event, share the link, and RSVPs will show up here.</p>
-            <a className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
+            <Link className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
               Create your first event
-            </a>
+            </Link>
           </div>
         ) : (
           <ul className={styles.list}>
