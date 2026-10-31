@@ -17,3 +17,7 @@ function cellToCsv(value: CsvValue): string {
 export function toCsvRow(values: CsvValue[]): string {
   return values.map(cellToCsv).join(",");
 }
+
+export function toCsv(header: string[], rows: CsvValue[][]): string {
+  return [header, ...rows].map((row) => `${toCsvRow(row)}\r\n`).join("");
+}

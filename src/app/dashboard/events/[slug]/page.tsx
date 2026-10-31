@@ -24,6 +24,9 @@ async function RosterContent({ params }: { params: Params }) {
       <TopBar user={user} />
       <main>
         <h1>{event.title}</h1>
+        <a href={`/dashboard/events/${event.slug}/roster.csv`} download>
+          Export CSV
+        </a>
         <ul>
           {roster.map((entry) => (
             <li key={entry.rsvpId}>
