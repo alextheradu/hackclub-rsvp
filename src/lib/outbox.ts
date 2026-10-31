@@ -34,19 +34,24 @@ export async function enqueue(db: Queryable, input: EnqueueInput): Promise<boole
   return rowCount === 1;
 }
 
-export async function claimDue(limit: number, db: Queryable = getPool()): Promise<OutboxJob[]> {
+export async function claimDue(
+  limit: number,
+  channels: readonly OutboxChannel[],
+  db: Queryable = getPool(),
+): Promise<OutboxJob[]> {
+  if (channels.length === 0) return [];
   const { rows } = await db.query(
     `UPDATE outbox SET attempts = attempts + 1,
                        run_after = now() + make_interval(secs => $2)
      WHERE id IN (
        SELECT id FROM outbox
-       WHERE status = 'pending' AND run_after <= now()
+       WHERE status = 'pending' AND run_after <= now() AND channel = ANY($3::text[])
        ORDER BY run_after, id
        LIMIT $1
        FOR UPDATE SKIP LOCKED
      )
      RETURNING id, channel, kind, payload, attempts`,
-    [limit, LEASE_SECONDS],
+    [limit, LEASE_SECONDS, channels],
   );
   return rows.map((row) => ({
     id: Number(row.id),

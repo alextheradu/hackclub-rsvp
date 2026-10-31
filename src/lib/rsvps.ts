@@ -1,4 +1,5 @@
 import { getPool, withTx } from "@/lib/db";
+import { enqueue } from "@/lib/outbox";
 import { decideStatus, promotionCount } from "@/lib/waitlist";
 
 export type CreateRsvpResult =
@@ -47,7 +48,10 @@ export async function createRsvp(eventId: number, userId: number): Promise<Creat
       "INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3) RETURNING id",
       [eventId, userId, status],
     );
-    return { id: Number(inserted[0].id), status };
+    const id = Number(inserted[0].id);
+    const kind = status === "confirmed" ? "rsvp_confirmed" : "rsvp_waitlisted";
+    await enqueue(client, { channel: "email", kind, payload: { rsvpId: id }, dedupeKey: `${kind}:${id}` });
+    return { id, status };
   });
 }
 
@@ -88,6 +92,15 @@ export async function cancelRsvp(eventId: number, userId: number): Promise<{ pro
       "UPDATE rsvps SET status = 'confirmed', status_changed_at = now() WHERE id = ANY($1::bigint[])",
       [next.map((row) => row.id)],
     );
+    for (const row of next) {
+      const rsvpId = Number(row.id);
+      await enqueue(client, {
+        channel: "email",
+        kind: "waitlist_promoted",
+        payload: { rsvpId },
+        dedupeKey: `waitlist_promoted:${rsvpId}`,
+      });
+    }
     return { promoted: next.map((row) => Number(row.user_id)) };
   });
 }

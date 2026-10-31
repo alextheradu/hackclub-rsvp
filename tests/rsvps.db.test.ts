@@ -231,6 +231,51 @@ describe("cancelRsvp", () => {
   });
 });
 
+async function outbox(): Promise<{ kind: string; rsvpId: number }[]> {
+  const { rows } = await getPool().query("SELECT kind, payload FROM outbox ORDER BY id");
+  return rows.map((r) => ({ kind: r.kind, rsvpId: r.payload.rsvpId }));
+}
+
+describe("rsvp notifications", () => {
+  it("queues a confirmation or waitlist email for each new RSVP", async () => {
+    const { eventId } = await makeEvent({ capacity: 1 });
+    const [a, b] = await makeUsers(2);
+    const first = await createRsvp(eventId, a);
+    const second = await createRsvp(eventId, b);
+    expect(await outbox()).toEqual([
+      { kind: "rsvp_confirmed", rsvpId: "id" in first && first.id },
+      { kind: "rsvp_waitlisted", rsvpId: "id" in second && second.id },
+    ]);
+  });
+
+  it("does not queue again when the same user RSVPs twice", async () => {
+    const { eventId } = await makeEvent();
+    const [a] = await makeUsers(1);
+    await createRsvp(eventId, a);
+    await createRsvp(eventId, a);
+    expect(await outbox()).toHaveLength(1);
+  });
+
+  it("queues nothing when the RSVP is rejected", async () => {
+    const { eventId } = await makeEvent({ cancelled: true });
+    const [a] = await makeUsers(1);
+    await createRsvp(eventId, a);
+    expect(await outbox()).toHaveLength(0);
+  });
+
+  it("queues a promotion email for the promoted RSVP", async () => {
+    const { eventId } = await makeEvent({ capacity: 1 });
+    const [a, b] = await makeUsers(2);
+    await createRsvp(eventId, a);
+    const waiting = await createRsvp(eventId, b);
+    await cancelRsvp(eventId, a);
+    expect((await outbox()).at(-1)).toEqual({
+      kind: "waitlist_promoted",
+      rsvpId: "id" in waiting && waiting.id,
+    });
+  });
+});
+
 describe("getRsvpSummary", () => {
   it("counts confirmed and waitlisted, ignoring cancelled", async () => {
     const { eventId } = await makeEvent({ capacity: 2 });

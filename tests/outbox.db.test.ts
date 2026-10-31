@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool, withTx } from "@/lib/db";
 import { MAX_ATTEMPTS } from "@/lib/outbox-backoff";
-import { claimDue, enqueue, markFailed, markSent } from "@/lib/outbox";
+import { claimDue, enqueue, markFailed, markSent, type OutboxChannel } from "@/lib/outbox";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
 
@@ -18,6 +18,8 @@ beforeEach(async () => {
 afterAll(async () => {
   await closePool();
 });
+
+const ALL = ["email", "slack"] as const satisfies readonly OutboxChannel[];
 
 const job = { channel: "email", kind: "rsvp_confirmed", payload: { rsvpId: 1 } } as const;
 
@@ -66,29 +68,37 @@ describe("enqueue", () => {
 describe("claimDue", () => {
   it("claims due jobs, counts the attempt, and leases them", async () => {
     await enqueue(getPool(), job);
-    const claimed = await claimDue(10);
+    const claimed = await claimDue(10, ALL);
     expect(claimed).toHaveLength(1);
     expect(claimed[0].attempts).toBe(1);
     expect(claimed[0].payload).toEqual({ rsvpId: 1 });
-    expect(await claimDue(10)).toHaveLength(0);
+    expect(await claimDue(10, ALL)).toHaveLength(0);
   });
 
   it("skips jobs scheduled for later", async () => {
     await enqueue(getPool(), { ...job, runAfter: new Date(Date.now() + 60_000) });
-    expect(await claimDue(10)).toHaveLength(0);
+    expect(await claimDue(10, ALL)).toHaveLength(0);
   });
 
   it("respects the limit and claims oldest first", async () => {
     await enqueue(getPool(), { ...job, payload: { n: 1 } });
     await enqueue(getPool(), { ...job, payload: { n: 2 } });
     await enqueue(getPool(), { ...job, payload: { n: 3 } });
-    const claimed = await claimDue(2);
+    const claimed = await claimDue(2, ALL);
     expect(claimed.map((j) => j.payload.n)).toEqual([1, 2]);
+  });
+
+  it("only claims jobs for the requested channels", async () => {
+    await enqueue(getPool(), job);
+    await enqueue(getPool(), { ...job, channel: "slack" });
+    const claimed = await claimDue(10, ["slack"]);
+    expect(claimed.map((j) => j.channel)).toEqual(["slack"]);
+    expect(await claimDue(10, [])).toHaveLength(0);
   });
 
   it("never hands the same job to two concurrent workers", async () => {
     for (let i = 0; i < 6; i++) await enqueue(getPool(), { ...job, payload: { n: i } });
-    const batches = await Promise.all([claimDue(6), claimDue(6), claimDue(6)]);
+    const batches = await Promise.all([claimDue(6, ALL), claimDue(6, ALL), claimDue(6, ALL)]);
     const ids = batches.flat().map((j) => j.id);
     expect(ids).toHaveLength(6);
     expect(new Set(ids).size).toBe(6);
@@ -98,17 +108,17 @@ describe("claimDue", () => {
 describe("markSent / markFailed", () => {
   it("marks a job sent and never claims it again", async () => {
     await enqueue(getPool(), job);
-    const [claimed] = await claimDue(1);
+    const [claimed] = await claimDue(1, ALL);
     await markSent(claimed.id);
     const stored = await row(claimed.id);
     expect(stored.status).toBe("sent");
     expect(stored.sent_at).not.toBeNull();
-    expect(await claimDue(10)).toHaveLength(0);
+    expect(await claimDue(10, ALL)).toHaveLength(0);
   });
 
   it("schedules a retry with backoff and records the error", async () => {
     await enqueue(getPool(), job);
-    const [claimed] = await claimDue(1);
+    const [claimed] = await claimDue(1, ALL);
     expect(await markFailed(claimed, new Error("smtp down"))).toBe("retry");
     const stored = await row(claimed.id);
     expect(stored.status).toBe("pending");
@@ -120,11 +130,11 @@ describe("markSent / markFailed", () => {
 
   it("dead-letters a job once attempts run out", async () => {
     await enqueue(getPool(), job);
-    const [claimed] = await claimDue(1);
+    const [claimed] = await claimDue(1, ALL);
     expect(await markFailed({ id: claimed.id, attempts: MAX_ATTEMPTS }, "boom")).toBe("dead");
     const stored = await row(claimed.id);
     expect(stored.status).toBe("failed");
     expect(stored.last_error).toBe("boom");
-    expect(await claimDue(10)).toHaveLength(0);
+    expect(await claimDue(10, ALL)).toHaveLength(0);
   });
 });
