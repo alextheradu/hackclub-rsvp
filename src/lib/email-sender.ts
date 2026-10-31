@@ -1,10 +1,10 @@
-import { getPool } from "@/lib/db";
+import { q, sql } from "@/lib/db";
 import { rootDomain } from "@/lib/domain";
 import { isEmailKind, renderEmail, type EmailKind } from "@/lib/email-templates";
 import { formatEventWhen } from "@/lib/format";
 import type { MailTransport } from "@/lib/mail";
 import type { Sender } from "@/lib/outbox-worker";
-import { eventUrl } from "@/lib/slug";
+import { eventUrl, type EventKind } from "@/lib/slug";
 
 const WANTED_STATUS: Record<EmailKind, string> = {
   rsvp_confirmed: "confirmed",
@@ -17,18 +17,28 @@ export function emailSender(transport: MailTransport, from: string): Sender {
   return async (job) => {
     if (!isEmailKind(job.kind)) throw new Error(`unknown email kind: ${job.kind}`);
 
-    const { rows } = await getPool().query(
-      `SELECT r.status, r.notifications_enabled, u.email, u.name,
-              e.slug, e.kind, e.title, e.starts_at, e.ends_at, e.timezone, e.cancelled_at,
-              o.name AS org_name
-       FROM rsvps r
-       JOIN users u ON u.id = r.user_id
-       JOIN events e ON e.id = r.event_id
-       JOIN orgs o ON o.id = e.org_id
-       WHERE r.id = $1`,
-      [job.payload.rsvpId],
-    );
-    const row = rows[0];
+    const row = await q().maybe<{
+      status: string;
+      notifications_enabled: boolean;
+      email: string;
+      name: string | null;
+      slug: string;
+      kind: EventKind;
+      title: string;
+      starts_at: Date;
+      ends_at: Date | null;
+      timezone: string;
+      cancelled_at: Date | null;
+      org_name: string;
+    }>(sql`
+      SELECT r.status, r.notifications_enabled, u.email, u.name,
+             e.slug, e.kind, e.title, e.starts_at, e.ends_at, e.timezone, e.cancelled_at,
+             o.name AS org_name
+      FROM rsvps r
+      JOIN users u ON u.id = r.user_id
+      JOIN events e ON e.id = r.event_id
+      JOIN orgs o ON o.id = e.org_id
+      WHERE r.id = ${job.payload.rsvpId}`);
     if (!row) return;
     if (!row.notifications_enabled || row.cancelled_at) return;
     if (row.status !== WANTED_STATUS[job.kind]) return;

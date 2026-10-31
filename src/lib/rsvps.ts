@@ -1,4 +1,4 @@
-import { getPool, withTx } from "@/lib/db";
+import { q, sql, withTx } from "@/lib/db";
 import { enqueue } from "@/lib/outbox";
 import { decideStatus, promotionCount } from "@/lib/waitlist";
 
@@ -8,47 +8,47 @@ export type CreateRsvpResult =
 
 export async function createRsvp(eventId: number, userId: number): Promise<CreateRsvpResult> {
   return withTx(async (client) => {
-    const { rows: events } = await client.query(
-      `SELECT org_id, capacity, cancelled_at, requires_verification,
-              coalesce(ends_at, starts_at) < now() AS ended
-       FROM events WHERE id = $1 FOR UPDATE`,
-      [eventId],
-    );
-    const event = events[0];
+    const db = q(client);
+    const event = await db.maybe<{
+      org_id: string;
+      capacity: number | null;
+      cancelled_at: Date | null;
+      requires_verification: boolean;
+      ended: boolean;
+    }>(sql`
+      SELECT org_id, capacity, cancelled_at, requires_verification,
+             coalesce(ends_at, starts_at) < now() AS ended
+      FROM events WHERE id = ${eventId} FOR UPDATE`);
     if (!event) return { error: "closed" };
     if (event.cancelled_at) return { error: "cancelled" };
     if (event.ended) return { error: "closed" };
 
-    const { rows: existing } = await client.query(
-      "SELECT id, status FROM rsvps WHERE event_id = $1 AND user_id = $2 AND status <> 'cancelled'",
-      [eventId, userId],
-    );
-    if (existing[0]) return { id: Number(existing[0].id), status: existing[0].status };
+    const existing = await db.maybe<{ id: string; status: "confirmed" | "waitlisted" }>(sql`
+      SELECT id, status FROM rsvps
+      WHERE event_id = ${eventId} AND user_id = ${userId} AND status <> 'cancelled'`);
+    if (existing) return { id: Number(existing.id), status: existing.status };
 
-    const { rowCount } = await client.query(
-      "SELECT 1 FROM org_members WHERE org_id = $1 AND user_id = $2",
-      [event.org_id, userId],
-    );
-    if (rowCount) return { error: "own_event" };
+    const isOrganizer = await db.exec(sql`
+      SELECT 1 FROM org_members WHERE org_id = ${event.org_id} AND user_id = ${userId}`);
+    if (isOrganizer) return { error: "own_event" };
 
     if (event.requires_verification) {
-      const { rows: users } = await client.query("SELECT ysws_eligible FROM users WHERE id = $1", [userId]);
-      if (users[0]?.ysws_eligible !== true) return { error: "not_eligible" };
+      const user = await db.maybe<{ ysws_eligible: boolean | null }>(sql`
+        SELECT ysws_eligible FROM users WHERE id = ${userId}`);
+      if (user?.ysws_eligible !== true) return { error: "not_eligible" };
     }
 
-    const { rows: counts } = await client.query(
-      "SELECT count(*)::int AS confirmed FROM rsvps WHERE event_id = $1 AND status = 'confirmed'",
-      [eventId],
-    );
+    const counts = await db.one<{ confirmed: number }>(sql`
+      SELECT count(*)::int AS confirmed FROM rsvps
+      WHERE event_id = ${eventId} AND status = 'confirmed'`);
     const status = decideStatus({
       capacity: event.capacity,
-      confirmedCount: counts[0].confirmed,
+      confirmedCount: counts.confirmed,
     });
-    const { rows: inserted } = await client.query(
-      "INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3) RETURNING id",
-      [eventId, userId, status],
-    );
-    const id = Number(inserted[0].id);
+    const inserted = await db.one<{ id: string }>(sql`
+      INSERT INTO rsvps (event_id, user_id, status) VALUES (${eventId}, ${userId}, ${status})
+      RETURNING id`);
+    const id = Number(inserted.id);
     const kind = status === "confirmed" ? "rsvp_confirmed" : "rsvp_waitlisted";
     await enqueue(client, { channel: "email", kind, payload: { rsvpId: id }, dedupeKey: `${kind}:${id}` });
     return { id, status };
@@ -57,41 +57,33 @@ export async function createRsvp(eventId: number, userId: number): Promise<Creat
 
 export async function cancelRsvp(eventId: number, userId: number): Promise<{ promoted: number[] }> {
   return withTx(async (client) => {
-    const { rows: events } = await client.query(
-      "SELECT capacity FROM events WHERE id = $1 FOR UPDATE",
-      [eventId],
-    );
-    if (!events[0]) return { promoted: [] };
+    const db = q(client);
+    const event = await db.maybe<{ capacity: number | null }>(sql`
+      SELECT capacity FROM events WHERE id = ${eventId} FOR UPDATE`);
+    if (!event) return { promoted: [] };
 
-    const { rowCount } = await client.query(
-      `UPDATE rsvps SET status = 'cancelled', status_changed_at = now()
-       WHERE event_id = $1 AND user_id = $2 AND status <> 'cancelled'`,
-      [eventId, userId],
-    );
-    if (!rowCount) return { promoted: [] };
+    const cancelled = await db.exec(sql`
+      UPDATE rsvps SET status = 'cancelled', status_changed_at = now()
+      WHERE event_id = ${eventId} AND user_id = ${userId} AND status <> 'cancelled'`);
+    if (!cancelled) return { promoted: [] };
 
-    const { rows: counts } = await client.query(
-      `SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
-              count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
-       FROM rsvps WHERE event_id = $1`,
-      [eventId],
-    );
+    const counts = await db.one<{ confirmed: number; waitlisted: number }>(sql`
+      SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
+             count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
+      FROM rsvps WHERE event_id = ${eventId}`);
     const seats = promotionCount({
-      capacity: events[0].capacity,
-      confirmedCount: counts[0].confirmed,
-      waitlistedCount: counts[0].waitlisted,
+      capacity: event.capacity,
+      confirmedCount: counts.confirmed,
+      waitlistedCount: counts.waitlisted,
     });
     if (seats === 0) return { promoted: [] };
 
-    const { rows: next } = await client.query(
-      `SELECT id, user_id FROM rsvps WHERE event_id = $1 AND status = 'waitlisted'
-       ORDER BY created_at, id LIMIT $2`,
-      [eventId, seats],
-    );
-    await client.query(
-      "UPDATE rsvps SET status = 'confirmed', status_changed_at = now() WHERE id = ANY($1::bigint[])",
-      [next.map((row) => row.id)],
-    );
+    const next = await db.many<{ id: string; user_id: string }>(sql`
+      SELECT id, user_id FROM rsvps WHERE event_id = ${eventId} AND status = 'waitlisted'
+      ORDER BY created_at, id LIMIT ${seats}`);
+    await db.exec(sql`
+      UPDATE rsvps SET status = 'confirmed', status_changed_at = now()
+      WHERE id = ANY(${next.map((row) => row.id)}::bigint[])`);
     for (const row of next) {
       const rsvpId = Number(row.id);
       await enqueue(client, {
@@ -112,26 +104,23 @@ export type RsvpSummary = {
 };
 
 export async function getRsvpSummary(eventId: number, userId: number | null): Promise<RsvpSummary> {
-  const pool = getPool();
-  const { rows } = await pool.query(
-    `SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
-            count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
-     FROM rsvps WHERE event_id = $1`,
-    [eventId],
-  );
+  const db = q();
+  const counts = await db.one<{ confirmed: number; waitlisted: number }>(sql`
+    SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
+           count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
+    FROM rsvps WHERE event_id = ${eventId}`);
 
   let myStatus: RsvpSummary["myStatus"] = null;
-  if(userId !== null) {
-    const { rows: mine } = await pool.query(
-      "SELECT status FROM rsvps WHERE event_id = $1 AND user_id = $2 AND status <> 'cancelled'",
-      [eventId, userId],
-    );
-    myStatus = mine[0]?.status ?? null;
+  if (userId !== null) {
+    const mine = await db.maybe<{ status: "confirmed" | "waitlisted" }>(sql`
+      SELECT status FROM rsvps
+      WHERE event_id = ${eventId} AND user_id = ${userId} AND status <> 'cancelled'`);
+    myStatus = mine?.status ?? null;
   }
 
   return {
-    confirmedCount: rows[0].confirmed,
-    waitlistedCount: rows[0].waitlisted,
+    confirmedCount: counts.confirmed,
+    waitlistedCount: counts.waitlisted,
     myStatus,
   };
 }

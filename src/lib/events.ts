@@ -1,5 +1,5 @@
 import type { EventKind } from "@/lib/slug";
-import { getPool, withTx } from "@/lib/db";
+import { q, sql, withTx } from "@/lib/db";
 import { validateSlug } from "@/lib/slug";
 
 export type NewOrg = {
@@ -83,18 +83,14 @@ export async function createOrg(
   if (!slug.ok) return slug;
   try {
     return await withTx(async (client) => {
-      const { rows} = await client.query (
-        "INSERT INTO orgs (name, slug) VALUES ($1, $2) RETURNING id",
-        [name, org.slug]
-      );
-      const id = Number(rows[0].id);
-      await client.query(
-        "INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')",
-        [id, userId]
-      );
+      const db = q(client);
+      const created = await db.one<{ id: string }>(sql`
+        INSERT INTO orgs (name, slug) VALUES (${name}, ${org.slug}) RETURNING id`);
+      const id = Number(created.id);
+      await db.exec(sql`
+        INSERT INTO org_members (org_id, user_id, role) VALUES (${id}, ${userId}, 'owner')`);
       return { ok: true as const, id };
-    }
-    );
+    });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       return { ok: false, reason: "taken" };
@@ -116,35 +112,22 @@ export async function createEvent(
   if (!slug.ok) return slug;
   try {
     return await withTx(async (client) => {
-      const member = await client.query(
-        "SELECT 1 FROM org_members WHERE org_id = $1 AND user_id = $2",
-        [event.orgId, userId],
-      );
-      if (member.rowCount === 0) {
+      const db = q(client);
+      const isMember = await db.exec(sql`
+        SELECT 1 FROM org_members WHERE org_id = ${event.orgId} AND user_id = ${userId}`);
+      if (!isMember) {
         return { ok: false as const, reason: "not_member" as const };
       }
-      const { rows } = await client.query(
-        `INSERT INTO events
-           (org_id, slug, title, description, kind, starts_at, ends_at,
-            timezone, capacity, website, online_url, location_display)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-         RETURNING id`,
-        [
-          event.orgId,
-          event.slug,
-          title,
-          event.description ?? null,
-          event.kind,
-          event.startsAt,
-          event.endsAt ?? null,
-          event.timezone ?? "UTC",
-          event.capacity ?? null,
-          event.website ?? null,
-          event.onlineUrl ?? null,
-          event.locationDisplay ?? null,
-        ],
-      );
-      return { ok: true as const, id: Number(rows[0].id), slug: event.slug };
+      const row = await db.one<{ id: string }>(sql`
+        INSERT INTO events
+          (org_id, slug, title, description, kind, starts_at, ends_at,
+           timezone, capacity, website, online_url, location_display)
+        VALUES (${event.orgId}, ${event.slug}, ${title}, ${event.description ?? null},
+                ${event.kind}, ${event.startsAt}, ${event.endsAt ?? null},
+                ${event.timezone ?? "UTC"}, ${event.capacity ?? null}, ${event.website ?? null},
+                ${event.onlineUrl ?? null}, ${event.locationDisplay ?? null})
+        RETURNING id`);
+      return { ok: true as const, id: Number(row.id), slug: event.slug };
     });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
@@ -157,16 +140,23 @@ export async function createEvent(
 export async function listEventsForUser(
   userId: number,
 ): Promise<EventSummary[]> {
-  const { rows } = await getPool().query(
-    `SELECT e.id, e.slug, e.title, e.kind, e.starts_at, e.timezone, o.name AS org_name,
-            e.cancelled_at IS NOT NULL AS cancelled
-     FROM events e
-     JOIN orgs o ON o.id = e.org_id
-     JOIN org_members m ON m.org_id = e.org_id
-     WHERE m.user_id = $1
-     ORDER BY e.starts_at ASC, e.id ASC`,
-    [userId],
-  );
+  const rows = await q().many<{
+    id: string;
+    slug: string;
+    title: string;
+    kind: EventKind;
+    starts_at: Date;
+    timezone: string;
+    org_name: string;
+    cancelled: boolean;
+  }>(sql`
+    SELECT e.id, e.slug, e.title, e.kind, e.starts_at, e.timezone, o.name AS org_name,
+           e.cancelled_at IS NOT NULL AS cancelled
+    FROM events e
+    JOIN orgs o ON o.id = e.org_id
+    JOIN org_members m ON m.org_id = e.org_id
+    WHERE m.user_id = ${userId}
+    ORDER BY e.starts_at ASC, e.id ASC`);
   return rows.map((row) => ({
     id: Number(row.id),
     slug: row.slug,
@@ -180,33 +170,42 @@ export async function listEventsForUser(
 }
 
 export async function listOrgsForUser(userId: number): Promise<OrgSummary[]> {
-  const { rows } = await getPool().query(
-    `SELECT o.id, o.name, o.slug
-     FROM orgs o
-     JOIN org_members m ON m.org_id = o.id
-     WHERE m.user_id = $1
-     ORDER BY lower(o.name), o.id`,
-    [userId],
-  );
+  const rows = await q().many<{ id: string; name: string; slug: string }>(sql`
+    SELECT o.id, o.name, o.slug
+    FROM orgs o
+    JOIN org_members m ON m.org_id = o.id
+    WHERE m.user_id = ${userId}
+    ORDER BY lower(o.name), o.id`);
   return rows.map((row) => ({ id: Number(row.id), name: row.name, slug: row.slug }));
 }
 
 export async function isEventSlugTaken(slug: string): Promise<boolean> {
-  const { rowCount } = await getPool().query("SELECT 1 FROM events WHERE slug = $1", [slug]);
-  return rowCount !== 0;
+  return (await q().exec(sql`SELECT 1 FROM events WHERE slug = ${slug}`)) !== 0;
 }
 
 export async function getEventBySlug(slug: string): Promise<PublicEvent | null> {
-  const { rows } = await getPool().query(
-    `SELECT e.id, e.slug, e.title, e.kind, e.description, e.starts_at, e.ends_at,
-            e.timezone, e.location_display, e.online_url, e.website, e.capacity,
-            e.cancelled_at IS NOT NULL AS cancelled, o.name AS org_name
-     FROM events e
-     JOIN orgs o ON o.id = e.org_id
-     WHERE e.slug = $1`,
-    [slug],
-  );
-  const row = rows[0];
+  const row = await q().maybe<{
+    id: string;
+    slug: string;
+    title: string;
+    kind: EventKind;
+    description: string | null;
+    starts_at: Date;
+    ends_at: Date | null;
+    timezone: string;
+    location_display: string | null;
+    online_url: string | null;
+    website: string | null;
+    capacity: number | null;
+    cancelled: boolean;
+    org_name: string;
+  }>(sql`
+    SELECT e.id, e.slug, e.title, e.kind, e.description, e.starts_at, e.ends_at,
+           e.timezone, e.location_display, e.online_url, e.website, e.capacity,
+           e.cancelled_at IS NOT NULL AS cancelled, o.name AS org_name
+    FROM events e
+    JOIN orgs o ON o.id = e.org_id
+    WHERE e.slug = ${slug}`);
   if (!row) return null;
   return {
     id: Number(row.id),
@@ -224,4 +223,28 @@ export async function getEventBySlug(slug: string): Promise<PublicEvent | null> 
     cancelled: row.cancelled,
     orgName: row.org_name,
   };
+}
+
+export type CancelEventResult = "ok" | "not_member" | "already_cancelled";
+
+export async function cancelEvent(userId: number, eventId: number): Promise<CancelEventResult> {
+  return withTx(async (client) => {
+    const db = q(client);
+    const event = await db.maybe<{ cancelled_at: Date | null }>(sql`
+      SELECT e.cancelled_at FROM events e
+      JOIN org_members m ON m.org_id = e.org_id
+      WHERE e.id = ${eventId} AND m.user_id = ${userId}
+      FOR UPDATE OF e`);
+    if (!event) return "not_member";
+    if (event.cancelled_at !== null) return "already_cancelled";
+    await db.exec(sql`UPDATE events SET cancelled_at = now() WHERE id = ${eventId}`);
+    await db.exec(sql`
+      INSERT INTO outbox (channel, kind, payload, dedupe_key)
+      SELECT 'email', 'event_cancelled', json_build_object('rsvpId', r.id), 'event_cancelled_' || r.id
+      FROM rsvps r
+      WHERE r.event_id = ${eventId} AND r.status IN ('confirmed', 'waitlisted')
+      ORDER BY r.id
+      ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING`);
+    return "ok";
+  });
 }

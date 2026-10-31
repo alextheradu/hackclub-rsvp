@@ -1,5 +1,5 @@
 import { verifySession } from "@/lib/session";
-import { getPool } from "./db";
+import { q, sql } from "./db";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 
@@ -20,16 +20,18 @@ export async function userFromSessionToken(
   if (!token) return null;
   const session = await verifySession(token, secret, now);
   if (!session) return null;
-  const { rows } = await getPool().query(
-    `
-      SELECT id, hca_id, email, name, slack_id, ysws_eligible
-      FROM users
-      WHERE id = $1
-    `,
-    [session.uid],
-  );
-  if (rows.length === 0) return null;
-  const row = rows[0];
+  const row = await q().maybe<{
+    id: string;
+    hca_id: string;
+    email: string;
+    name: string | null;
+    slack_id: string | null;
+    ysws_eligible: boolean | null;
+  }>(sql`
+    SELECT id, hca_id, email, name, slack_id, ysws_eligible
+    FROM users
+    WHERE id = ${session.uid}`);
+  if (!row) return null;
   return {
     id: Number(row.id),
     hcaId: row.hca_id,
