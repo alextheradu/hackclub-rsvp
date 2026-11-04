@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
-import { getRecentRsvps, getRoster } from "@/lib/roster";
+import { getRecentRsvps, getRoster, getRosterCounts } from "@/lib/roster";
 import { cancelRsvp, createRsvp } from "@/lib/rsvps";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
@@ -157,6 +157,55 @@ describe("getRoster filters", () => {
   it("still returns null for an outsider when filtering", async () => {
     const { outsider, eventId } = await seed();
     expect(await getRoster(outsider, eventId, { status: "confirmed" })).toBeNull();
+  });
+});
+
+describe("getRosterCounts", () => {
+  async function seed() {
+    const ctx = await setup(1);
+    const ada = await makeUser("ada", "U_ADA");
+    const bob = await makeUser("bob");
+    const cat = await makeUser("cat");
+    await createRsvp(ctx.eventId, ada);
+    await createRsvp(ctx.eventId, bob);
+    await createRsvp(ctx.eventId, cat);
+    await cancelRsvp(ctx.eventId, cat);
+    return ctx;
+  }
+
+  it("counts every status", async () => {
+    const { organizer, eventId } = await seed();
+    expect(await getRosterCounts(organizer, eventId)).toEqual({
+      all: 3,
+      confirmed: 1,
+      waitlisted: 1,
+      cancelled: 1,
+    });
+  });
+
+  it("applies the search", async () => {
+    const { organizer, eventId } = await seed();
+    expect(await getRosterCounts(organizer, eventId, "bob")).toEqual({
+      all: 1,
+      confirmed: 0,
+      waitlisted: 1,
+      cancelled: 0,
+    });
+  });
+
+  it("returns zeros for an event with no RSVPs", async () => {
+    const { organizer, eventId } = await setup();
+    expect(await getRosterCounts(organizer, eventId)).toEqual({
+      all: 0,
+      confirmed: 0,
+      waitlisted: 0,
+      cancelled: 0,
+    });
+  });
+
+  it("returns null for someone outside the event's org", async () => {
+    const { outsider, eventId } = await seed();
+    expect(await getRosterCounts(outsider, eventId)).toBeNull();
   });
 });
 

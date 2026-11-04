@@ -28,3 +28,14 @@ export function parseRosterFilter (params: { status?: Param; q?: Param }): Roste
 export function likePattern (text: string): string {
     return `%${text.replace(/[\\%_]/g, "\\$&")}%`;
 }
+export function rosterHref (base: string, filter: RosterFilter): string {
+    const params = new URLSearchParams();
+    if (filter.status) {
+        params.set("status", filter.status);
+    }
+    if (filter.q) {
+        params.set("q", filter.q);
+    }
+    const query = params.toString();
+    return query ? `${base}?${query}` : base;
+}

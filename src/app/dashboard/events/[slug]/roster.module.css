@@ -1,15 +1,14 @@
 .toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
-.total {
-  color: var(--muted);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
+.statusFilter {
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .emptyRoster {
@@ -19,6 +18,18 @@
   color: var(--muted);
   font-size: var(--text-sm);
   text-align: center;
+}
+
+.emptyRoster a {
+  color: var(--foreground);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+}
+
+.emptyRoster a:hover {
+  text-decoration-color: var(--foreground);
 }
 
 .dangerZone {
@@ -45,16 +56,54 @@
   line-height: 1.5;
 }
 
-.filters {
+.search {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
-}
-
-.search {
   flex: 1;
   min-width: 0;
+}
+
+.searchField {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.searchField .input {
+  padding-right: 40px;
+}
+
+.searchField .input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid var(--border);
+  border-top-color: var(--muted);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  animation: spin 700ms linear infinite;
+  transition: opacity 150ms var(--ease-out);
+}
+
+/* Delay so quick results don't flash the spinner. */
+.search[data-pending] .spinner {
+  opacity: 1;
+  transition-delay: 200ms;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
 }
 
 .input {
@@ -82,11 +131,6 @@
   outline: none;
   border-color: var(--faint);
   background: var(--surface);
-}
-
-select.input {
-  padding-right: 32px;
-  cursor: pointer;
 }
 
 .clear {
@@ -135,12 +179,9 @@ select.input {
 }
 
 @media (max-width: 640px) {
-  .filters {
-    flex-wrap: wrap;
-  }
-
-  .search {
-    flex-basis: 100%;
+  .statusFilter {
+    margin-inline: -16px;
+    padding-inline: 16px;
   }
 
   .row {
@@ -201,7 +242,8 @@ select.input {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .confirm {
+  .confirm,
+  .spinner {
     animation: none;
   }
 }

@@ -10,17 +10,23 @@ export type RosterEntry = {
   rsvpedAt: Date;
 };
 
+export type RosterCounts = Record<RosterStatus, number> & { all: number };
+
+async function isEventMember(db: ReturnType<typeof q>, userId: number, eventId: number): Promise<boolean> {
+  const rows = await db.exec(sql`
+    SELECT 1 FROM events e
+    JOIN org_members m ON m.org_id = e.org_id
+    WHERE e.id = ${eventId} AND m.user_id = ${userId}`);
+  return rows > 0;
+}
+
 export async function getRoster(
   userId: number,
   eventId: number,
   filter: RosterFilter = {},
 ): Promise<RosterEntry[] | null> {
   const db = q();
-  const isMember = await db.exec(sql`
-    SELECT 1 FROM events e
-    JOIN org_members m ON m.org_id = e.org_id
-    WHERE e.id = ${eventId} AND m.user_id = ${userId}`);
-  if (!isMember) return null;
+  if (!(await isEventMember(db, userId, eventId))) return null;
 
   const status = filter.status ?? null;
   const pattern = filter.q ? likePattern(filter.q) : null;
@@ -47,6 +53,28 @@ export async function getRoster(
     status: row.status,
     rsvpedAt: row.created_at,
   }));
+}
+
+// Counts per status for the roster filter. The search applies, the status filter doesn't.
+export async function getRosterCounts(
+  userId: number,
+  eventId: number,
+  search?: string,
+): Promise<RosterCounts | null> {
+  const db = q();
+  if (!(await isEventMember(db, userId, eventId))) return null;
+
+  const pattern = search ? likePattern(search) : null;
+  const row = await db.one<RosterCounts>(sql`
+    SELECT count(*)::int AS "all",
+           count(*) FILTER (WHERE r.status = 'confirmed')::int AS confirmed,
+           count(*) FILTER (WHERE r.status = 'waitlisted')::int AS waitlisted,
+           count(*) FILTER (WHERE r.status = 'cancelled')::int AS cancelled
+    FROM rsvps r
+    JOIN users u ON u.id = r.user_id
+    WHERE r.event_id = ${eventId}
+      AND (${pattern}::text IS NULL OR u.name ILIKE ${pattern} OR u.email ILIKE ${pattern} OR u.slack_id ILIKE ${pattern})`);
+  return row;
 }
 
 export async function getRecentRsvps(

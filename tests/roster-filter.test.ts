@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { likePattern, parseRosterFilter } from "@/lib/roster-filter";
+import { likePattern, parseRosterFilter, rosterHref } from "@/lib/roster-filter";
 
 describe("parseRosterFilter", () => {
   it("returns an empty filter for no params", () => {
@@ -45,5 +45,21 @@ describe("likePattern", () => {
 
   it("escapes backslashes", () => {
     expect(likePattern("a\\b")).toBe("%a\\\\b%");
+  });
+});
+
+describe("rosterHref", () => {
+  const base = "/dashboard/events/my-event/roster";
+
+  it("returns the bare path with no filter", () => {
+    expect(rosterHref(base, {})).toBe(base);
+  });
+
+  it("keeps status and search", () => {
+    expect(rosterHref(base, { status: "waitlisted", q: "ada" })).toBe(`${base}?status=waitlisted&q=ada`);
+  });
+
+  it("encodes the search", () => {
+    expect(rosterHref(base, { q: "a&b c" })).toBe(`${base}?q=a%26b+c`);
   });
 });
