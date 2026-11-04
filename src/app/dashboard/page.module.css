@@ -96,7 +96,7 @@
 }
 
 .tileMonth {
-  color: var(--accent);
+  color: var(--muted);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -143,14 +143,40 @@
 .rowMeta {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  column-gap: 0;
+  min-width: 0;
   color: var(--muted);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 
+.rowMeta > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.metaWhat {
+  overflow: hidden;
+}
+
+.org {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaWhat::before {
+  content: "";
+  flex-shrink: 0;
+  width: 3px;
+  height: 3px;
+  margin: 0 8px;
+  border-radius: 999px;
+  background: var(--faint);
+}
+
 .dot {
+  flex-shrink: 0;
   width: 3px;
   height: 3px;
   margin: 0 8px;
@@ -293,6 +319,10 @@
   padding: 16px 20px 16px 16px;
 }
 
+.skeletonRow .rowMain {
+  flex: 1;
+}
+
 .skeletonTile {
   width: 52px;
   height: 56px;
@@ -349,6 +379,20 @@
   .tile {
     width: 46px;
     height: 50px;
+  }
+
+  .rowMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .rowMeta > span {
+    max-width: 100%;
+  }
+
+  .metaWhat::before {
+    display: none;
   }
 }
 

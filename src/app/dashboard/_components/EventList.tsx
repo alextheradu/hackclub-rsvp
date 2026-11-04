@@ -29,7 +29,7 @@ function Capacity({ event, tab }: { event: EventSummary; tab: EventTab }) {
     <div className={styles.capacity}>
       <span className={styles.count}>
         <span className={styles.countNum}>{going}</span>
-        {capacity !== null && <span className={styles.countMax}> / {capacity}</span>}
+        {capacity !== null && <span className={styles.countMax}>/{capacity}</span>}
         <span className={styles.countLabel}> {label}</span>
       </span>
       {capacity !== null && (
@@ -77,11 +77,14 @@ function EventRow({ event, tab, now }: { event: EventSummary; tab: EventTab; now
             <span className="sr-only">
               {when.month} {when.day},{" "}
             </span>
-            {when.weekday} {showYear && `${when.year} `}· {when.time} {when.zone}
-            <span className={styles.dot} aria-hidden="true" />
-            {event.kind === "irl" ? "In person" : "YSWS"}
-            <span className={styles.dot} aria-hidden="true" />
-            {event.orgName}
+            <span>
+              {when.weekday} {showYear && `${when.year} `}· {when.time} {when.zone}
+            </span>
+            <span className={styles.metaWhat}>
+              {event.kind === "irl" ? "In person" : "YSWS"}
+              <span className={styles.dot} aria-hidden="true" />
+              <span className={styles.org}>{event.orgName}</span>
+            </span>
           </span>
         </span>
         <Capacity event={event} tab={tab} />
