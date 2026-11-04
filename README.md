@@ -1,36 +1,119 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# hackclub.rsvp
 
-## Getting Started
+the one Hack Club rsvp platform to rule them all!
 
-First, run the development server:
+## what is this for?
+
+this platform is intended as a replacement for some other rsvp platforms that Hack Club ysws organizers would use to gauge interest for their programs. it supports (as of now) both online ysws events and in-person meetups (like stardance expeditions). i'm working on being able to add custom domains through cloudflare and some other cool stuff.
+
+### what works right now
+
+- log in with Hack Club Auth
+- create events, each with its own page at `slug.hackclub.rsvp`
+- rsvps with capacity limits and a waitlist that auto-promotes people when spots open up
+- confirmation + reminder emails (with a calendar `.ics` file)
+- an organizer roster with filtering and csv export
+- cancelling events (everyone who rsvp'd gets an email)
+
+### coming soon
+
+- slack notifications
+- custom domains (like `customrsvp.hackclub.rsvp`)
+- a public api, webhooks, and an embeddable widget for ysws sites
+
+## local development
+
+you'll need:
+
+- node 26 (see `.nvmrc`)
+- a postgres database
+- a Hack Club Auth app (make one at [auth.hackclub.com](https://auth.hackclub.com)) with `http://localhost:3000/oauth/callback` as a redirect uri
+
+run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+then, after filling out all of your env vars (see below)
+run:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm i
+npm run migrate
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+and open [localhost:3000](http://localhost:3000)!
 
-## Learn More
+> [!TIP]
+> if you set `ROOT_DOMAIN=localhost` in your `.env`, event pages work at `your-slug.localhost:3000`, just like `your-slug.hackclub.rsvp` in prod.
 
-To learn more about Next.js, take a look at the following resources:
+## env vars
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| var                                         | needed?            | what it's for                                                         |
+| ------------------------------------------- | ------------------ | --------------------------------------------------------------------- |
+| `ROOT_DOMAIN`                               | yes                | the main domain, `hackclub.rsvp` in prod (or `localhost` locally)     |
+| `DATABASE_URL`                              | yes                | postgres connection string                                            |
+| `SESSION_SECRET`                            | yes                | signs login cookies, make it long and random (`openssl rand -hex 32`) |
+| `HCA_CLIENT_ID`, `HCA_CLIENT_SECRET`        | yes                | your Hack Club Auth app                                               |
+| `HCA_REDIRECT_URI`                          | yes                | `http://localhost:3000/oauth/callback` locally                        |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | for emails | smtp relay from your mail provider. if these are blank, emails just wait in the queue until you fill them in |
+| `CF_TOKEN`, `CF_ZONE_ID`, `CF_MAX_DOMAINS`, `CF_DOMAIN_TTL_DAYS` | not yet | cloudflare stuff for custom domains (coming soon) |
+| `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_ORGANIZER_CHANNEL_ID` | not yet | slack notifications (coming soon) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> [!WARNING]
+> never commit your `.env`! it's already gitignored, so just don't force-add it :)
 
-## Deploy on Vercel
+## scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| script              | what it does                                                      |
+| ------------------- | ----------------------------------------------------------------- |
+| `npm run dev`       | runs this project on a local port (3000 by default)               |
+| `npm run build`     | compiles this project for production                              |
+| `npm run start`     | runs the production build                                         |
+| `npm run migrate`   | applies any new database migrations from `migrations/`            |
+| `npm run lint`      | scans the codebase for bugs and style issues with eslint          |
+| `npm run typecheck` | scans the codebase for TypeScript errors (`tsc --noEmit`)         |
+| `npm run test`      | runs the entire test suite once with vitest                       |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## tests
+
+some tests are pure functions and run anywhere, but the ones ending in `.db.test.ts` need a real postgres database. the database name **has** to end in `_test` (the tests wipe it between runs, so this keeps them away from your real data).
+
+```bash
+createdb rsvp_test
+echo 'TEST_DATABASE_URL=postgres://localhost/rsvp_test' > .env.test
+npm run test
+```
+
+## project layout
+
+| folder        | what's in it                                                  |
+| ------------- | ------------------------------------------------------------- |
+| `src/app`     | pages and routes (dashboard, event pages, login)              |
+| `src/lib`     | the actual logic (rsvps, waitlist, emails, auth, csv, etc.)   |
+| `src/proxy.ts`| routes `slug.hackclub.rsvp` to the right event page           |
+| `migrations/` | sql migrations, run in order by `npm run migrate`             |
+| `scripts/`    | the migration runner                                          |
+| `tests/`      | all of the tests                                              |
+| `docs/`       | plans and docs (like the api)                                 |
+<small>(yes yes i know this is a sign of an ai readme but i believe its useful for ppl who wanna make changes to this app)</small>
+
+## api
+
+check out [docs/api.md](docs/api.md) 👍 (it's still a plan, the api isn't built yet!)
+
+## deployment
+
+this runs on [dokploy](https://dokploy.com) using the `Dockerfile` in this repo. when the container starts, it automatically runs any new migrations and then starts the server, so you don't have to manually run the migrations. set all the env vars from `.env.example` in dokploy, and make sure `HCA_REDIRECT_URI` points to `https://hackclub.rsvp/oauth/callback` (or your local link).
+
+## contributing
+
+prs are welcome! before you open one, make sure these all pass:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+```

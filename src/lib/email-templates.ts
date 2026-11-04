@@ -1,4 +1,9 @@
-export type EmailKind = "rsvp_confirmed" | "rsvp_waitlisted" | "waitlist_promoted" | "event_reminder";
+export type EmailKind =
+  | "rsvp_confirmed"
+  | "rsvp_waitlisted"
+  | "waitlist_promoted"
+  | "event_reminder"
+  | "event_cancelled";
 
 export type EmailContext = {
   name: string | null;
@@ -25,6 +30,10 @@ const COPY: Record<EmailKind, { subject: (title: string) => string; body: string
     subject: (title) => `Tomorrow: ${title}`,
     body: "Just a reminder that the event is tomorrow. See you there!",
   },
+  event_cancelled: {
+    subject: (title) => `Cancelled: ${title}`,
+    body: "The organizers cancelled this event, so your RSVP no longer applies. Sorry about that!",
+  },
 };
 
 export function isEmailKind(kind: string): kind is EmailKind {
@@ -44,7 +53,7 @@ export function renderEmail(kind: EmailKind, ctx: EmailContext) {
   const copy = COPY[kind];
   const greeting = ctx.name ? `Hey ${ctx.name},` : "Hey,";
   const cancel = "Can't make it? Cancel from the event page so someone else can have your spot.";
-  const showCancel = kind !== "rsvp_waitlisted";
+  const showCancel = kind !== "rsvp_waitlisted" && kind !== "event_cancelled";
 
   const text = [
     greeting,

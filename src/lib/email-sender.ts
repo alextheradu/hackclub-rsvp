@@ -6,11 +6,12 @@ import type { MailTransport } from "@/lib/mail";
 import type { Sender } from "@/lib/outbox-worker";
 import { eventUrl, type EventKind } from "@/lib/slug";
 
-const WANTED_STATUS: Record<EmailKind, string> = {
-  rsvp_confirmed: "confirmed",
-  rsvp_waitlisted: "waitlisted",
-  waitlist_promoted: "confirmed",
-  event_reminder: "confirmed",
+const WANTED_STATUS: Record<EmailKind, readonly string[]> = {
+  rsvp_confirmed: ["confirmed"],
+  rsvp_waitlisted: ["waitlisted"],
+  waitlist_promoted: ["confirmed"],
+  event_reminder: ["confirmed"],
+  event_cancelled: ["confirmed", "waitlisted"],
 };
 
 export function emailSender(transport: MailTransport, from: string): Sender {
@@ -40,8 +41,9 @@ export function emailSender(transport: MailTransport, from: string): Sender {
       JOIN orgs o ON o.id = e.org_id
       WHERE r.id = ${job.payload.rsvpId}`);
     if (!row) return;
-    if (!row.notifications_enabled || row.cancelled_at) return;
-    if (row.status !== WANTED_STATUS[job.kind]) return;
+    if (!row.notifications_enabled) return;
+    if (row.cancelled_at && job.kind !== "event_cancelled") return;
+    if (!WANTED_STATUS[job.kind].includes(row.status)) return;
 
     const mail = renderEmail(job.kind, {
       name: row.name,

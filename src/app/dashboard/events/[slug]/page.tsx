@@ -4,11 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getEventBySlug } from "@/lib/events";
 import { getRoster, type RosterEntry } from "@/lib/roster";
+import { getRsvpSummary } from "@/lib/rsvps";
 import { parseRosterFilter, ROSTER_STATUSES, type RosterStatus } from "@/lib/roster-filter";
 import { validateSlug } from "@/lib/slug";
 import buttons from "@/components/buttons.module.css";
 import { TopBar } from "../../_components/TopBar";
 import dash from "../../page.module.css";
+import { CancelEventButton } from "./CancelEventButton";
 import styles from "./roster.module.css";
 
 type Props = PageProps<"/dashboard/events/[slug]">;
@@ -55,6 +57,7 @@ async function RosterContent({ params, searchParams }: Pick<Props, "params" | "s
 
   const roster = await getRoster(user.id, event.id, filter);
   if (!roster) notFound();
+  const summary = event.cancelled ? null : await getRsvpSummary(event.id, null);
 
   const filtering = Boolean(filter.status || filter.q);
   const count = `${roster.length} ${roster.length === 1 ? "RSVP" : "RSVPs"}`;
@@ -63,19 +66,34 @@ async function RosterContent({ params, searchParams }: Pick<Props, "params" | "s
     <>
       <TopBar user={user} />
       <main className={dash.column}>
-        <div className={dash.heading}>
+        <div className={`${dash.heading} ${styles.heading}`}>
           <div>
             <h1 className={dash.title}>{event.title}</h1>
             <p className={dash.sub}>{filtering ? `${count} match` : count}</p>
           </div>
-          <a
-            className={buttons.btn}
-            href={`/dashboard/events/${event.slug}/roster.csv`}
-            download
-          >
-            Export CSV
-          </a>
+          <div className={styles.actions}>
+            <a
+              className={buttons.btn}
+              href={`/dashboard/events/${event.slug}/roster.csv`}
+              download
+            >
+              Export CSV
+            </a>
+            {summary && (
+              <CancelEventButton
+                slug={event.slug}
+                notifyCount={summary.confirmedCount + summary.waitlistedCount}
+              />
+            )}
+          </div>
         </div>
+
+        {event.cancelled && (
+          <p className={styles.notice} role="status">
+            This event is cancelled. RSVPs are closed and everyone who was going or waitlisted
+            was emailed.
+          </p>
+        )}
 
         <form className={styles.filters} role="search">
           <label className={styles.search}>
