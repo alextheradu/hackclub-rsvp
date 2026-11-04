@@ -1,4 +1,4 @@
-import { q, sql, withTx } from "@/lib/db";
+import { q, sql, withTx, type Queryable } from "@/lib/db";
 import { enqueue } from "@/lib/outbox";
 import { decideStatus, promotionCount } from "@/lib/waitlist";
 
@@ -67,34 +67,44 @@ export async function cancelRsvp(eventId: number, userId: number): Promise<{ pro
       WHERE event_id = ${eventId} AND user_id = ${userId} AND status <> 'cancelled'`);
     if (!cancelled) return { promoted: [] };
 
-    const counts = await db.one<{ confirmed: number; waitlisted: number }>(sql`
-      SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
-             count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
-      FROM rsvps WHERE event_id = ${eventId}`);
-    const seats = promotionCount({
-      capacity: event.capacity,
-      confirmedCount: counts.confirmed,
-      waitlistedCount: counts.waitlisted,
-    });
-    if (seats === 0) return { promoted: [] };
-
-    const next = await db.many<{ id: string; user_id: string }>(sql`
-      SELECT id, user_id FROM rsvps WHERE event_id = ${eventId} AND status = 'waitlisted'
-      ORDER BY created_at, id LIMIT ${seats}`);
-    await db.exec(sql`
-      UPDATE rsvps SET status = 'confirmed', status_changed_at = now()
-      WHERE id = ANY(${next.map((row) => row.id)}::bigint[])`);
-    for (const row of next) {
-      const rsvpId = Number(row.id);
-      await enqueue(client, {
-        channel: "email",
-        kind: "waitlist_promoted",
-        payload: { rsvpId },
-        dedupeKey: `waitlist_promoted:${rsvpId}`,
-      });
-    }
-    return { promoted: next.map((row) => Number(row.user_id)) };
+    return { promoted: await promoteWaitlist(client, eventId, event.capacity) };
   });
+}
+
+// Caller must hold FOR UPDATE on the event row.
+export async function promoteWaitlist(
+  client: Queryable,
+  eventId: number,
+  capacity: number | null,
+): Promise<number[]> {
+  const db = q(client);
+  const counts = await db.one<{ confirmed: number; waitlisted: number }>(sql`
+    SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,
+           count(*) FILTER (WHERE status = 'waitlisted')::int AS waitlisted
+    FROM rsvps WHERE event_id = ${eventId}`);
+  const seats = promotionCount({
+    capacity,
+    confirmedCount: counts.confirmed,
+    waitlistedCount: counts.waitlisted,
+  });
+  if (seats === 0) return [];
+
+  const next = await db.many<{ id: string; user_id: string }>(sql`
+    SELECT id, user_id FROM rsvps WHERE event_id = ${eventId} AND status = 'waitlisted'
+    ORDER BY created_at, id LIMIT ${seats}`);
+  await db.exec(sql`
+    UPDATE rsvps SET status = 'confirmed', status_changed_at = now()
+    WHERE id = ANY(${next.map((row) => row.id)}::bigint[])`);
+  for (const row of next) {
+    const rsvpId = Number(row.id);
+    await enqueue(client, {
+      channel: "email",
+      kind: "waitlist_promoted",
+      payload: { rsvpId },
+      dedupeKey: `waitlist_promoted:${rsvpId}`,
+    });
+  }
+  return next.map((row) => Number(row.user_id));
 }
 
 export type RsvpSummary = {

@@ -1,5 +1,6 @@
 import type { EventKind } from "@/lib/slug";
 import { q, sql, withTx } from "@/lib/db";
+import { promoteWaitlist } from "@/lib/rsvps";
 import { validateSlug } from "@/lib/slug";
 
 export type NewOrg = {
@@ -246,5 +247,70 @@ export async function cancelEvent(userId: number, eventId: number): Promise<Canc
       ORDER BY r.id
       ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING`);
     return "ok";
+  });
+}
+
+export type EventChanges = {
+  title: string;
+  description: string | null;
+  startsAt: Date;
+  endsAt: Date | null;
+  timezone: string;
+  capacity: number | null;
+  website: string | null;
+  onlineUrl: string | null;
+  locationDisplay: string | null;
+};
+
+export type UpdateEventResult =
+  | { ok: true; promoted: number }
+  | { ok: false; reason: "title" | "dates" | "not_member" | "cancelled" }
+  | { ok: false; reason: "capacity"; confirmedCount: number };
+
+export async function updateEvent(
+  userId: number,
+  eventId: number,
+  changes: EventChanges,
+): Promise<UpdateEventResult> {
+  const title = changes.title.trim();
+  if (!title) return { ok: false, reason: "title" };
+  if (changes.endsAt && changes.endsAt <= changes.startsAt) {
+    return { ok: false, reason: "dates" };
+  }
+
+  return withTx(async (client) => {
+    const db = q(client);
+    const event = await db.maybe<{ cancelled_at: Date | null }>(sql`
+      SELECT e.cancelled_at FROM events e
+      JOIN org_members m ON m.org_id = e.org_id
+      WHERE e.id = ${eventId} AND m.user_id = ${userId}
+      FOR UPDATE OF e`);
+    if (!event) return { ok: false as const, reason: "not_member" as const };
+    if (event.cancelled_at !== null) return { ok: false as const, reason: "cancelled" as const };
+
+    if (changes.capacity !== null) {
+      const { confirmed } = await db.one<{ confirmed: number }>(sql`
+        SELECT count(*)::int AS confirmed FROM rsvps
+        WHERE event_id = ${eventId} AND status = 'confirmed'`);
+      if (changes.capacity < confirmed) {
+        return { ok: false as const, reason: "capacity" as const, confirmedCount: confirmed };
+      }
+    }
+
+    await db.exec(sql`
+      UPDATE events SET
+        title = ${title},
+        description = ${changes.description},
+        starts_at = ${changes.startsAt},
+        ends_at = ${changes.endsAt},
+        timezone = ${changes.timezone},
+        capacity = ${changes.capacity},
+        website = ${changes.website},
+        online_url = ${changes.onlineUrl},
+        location_display = ${changes.locationDisplay}
+      WHERE id = ${eventId}`);
+
+    const promoted = await promoteWaitlist(client, eventId, changes.capacity);
+    return { ok: true as const, promoted: promoted.length };
   });
 }
