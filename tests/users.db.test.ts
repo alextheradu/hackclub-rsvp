@@ -19,6 +19,8 @@ const profile: HcaProfile = {
   ysws_eligible: true,
 };
 
+const AVATAR = "https://avatars.slack-edge.com/2026-01-01/abc_192.png";
+
 beforeAll(async () => {
   await wipeSchema();
   await runMigrations(getPool(), resolve(__dirname, "../migrations"));
@@ -89,6 +91,34 @@ describe("upsertUser", () => {
     const { id } = await upsertUser({ sub: "ident!min", email: "min@example.com" });
     const { rows } = await getPool().query("SELECT slack_id, name, ysws_eligible FROM users WHERE id = $1", [id]);
     expect(rows[0]).toEqual({ slack_id: null, name: null, ysws_eligible: null });
+  });
+
+  it("stores the Slack avatar URL", async () => {
+    const { id } = await upsertUser(profile, AVATAR);
+    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    expect(rows[0].avatar_url).toBe(AVATAR);
+  });
+
+  it("keeps the old avatar when Slack is unreachable on a later login", async () => {
+    const { id } = await upsertUser(profile, AVATAR);
+    await upsertUser(profile, null);
+    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    expect(rows[0].avatar_url).toBe(AVATAR);
+  });
+
+  it("replaces the avatar when Slack returns a new one", async () => {
+    const { id } = await upsertUser(profile, AVATAR);
+    const next = "https://avatars.slack-edge.com/2026-11-03/new_192.png";
+    await upsertUser(profile, next);
+    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    expect(rows[0].avatar_url).toBe(next);
+  });
+
+  it("clears the avatar when the Slack account is unlinked", async () => {
+    const { id } = await upsertUser(profile, AVATAR);
+    await upsertUser({ ...profile, slack_id: undefined }, null);
+    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    expect(rows[0].avatar_url).toBeNull();
   });
 
   it("keeps different hca_ids as different users even with the same email", async () => {

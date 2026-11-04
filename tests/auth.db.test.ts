@@ -44,6 +44,7 @@ describe("userFromSessionToken", () => {
       email: "ada@example.com",
       name: "Ada Lovelace",
       slackId: "U0ADA",
+      avatarUrl: null,
       yswsEligible: true,
     });
   });

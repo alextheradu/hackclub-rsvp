@@ -9,6 +9,7 @@ export type CurrentUser = {
   email: string;
   name: string | null;
   slackId: string | null;
+  avatarUrl: string | null;
   yswsEligible: boolean | null;
 };
 
@@ -26,9 +27,10 @@ export async function userFromSessionToken(
     email: string;
     name: string | null;
     slack_id: string | null;
+    avatar_url: string | null;
     ysws_eligible: boolean | null;
   }>(sql`
-    SELECT id, hca_id, email, name, slack_id, ysws_eligible
+    SELECT id, hca_id, email, name, slack_id, avatar_url, ysws_eligible
     FROM users
     WHERE id = ${session.uid}`);
   if (!row) return null;
@@ -38,6 +40,7 @@ export async function userFromSessionToken(
     email: row.email,
     name: row.name,
     slackId: row.slack_id,
+    avatarUrl: row.avatar_url,
     yswsEligible: row.ysws_eligible,
   };
 }

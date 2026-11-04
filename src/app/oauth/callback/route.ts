@@ -2,6 +2,7 @@ import {cookies} from "next/headers";
 import {redirect} from "next/navigation";
 import {checkState, exchangeCode, fetchUserinfo, safeReturnTo} from "@/lib/hca";
 import {signSession} from "@/lib/session";
+import {fetchSlackAvatar} from "@/lib/slack";
 import {upsertUser} from "@/lib/users";
 
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
@@ -29,7 +30,8 @@ export async function GET(request: Request) {
     try {
         const {accessToken} = await exchangeCode(code);
         const profile = await fetchUserinfo(accessToken);
-        uid = (await upsertUser(profile)).id;
+        const avatarUrl = await fetchSlackAvatar(profile.slack_id);
+        uid = (await upsertUser(profile, avatarUrl)).id;
     } catch (error) {
         console.error("login failed:", error instanceof Error ? error.message : "unknown error");
         return new Response("Login failed", {status: 502});

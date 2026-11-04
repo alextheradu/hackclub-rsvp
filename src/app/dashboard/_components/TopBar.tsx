@@ -52,7 +52,18 @@ export function TopBar({ user, crumbs = [] }: Props) {
               popoverTarget="account-menu"
               aria-label={`Account menu for ${displayName}`}
             >
-              {displayName.trim().charAt(0).toUpperCase() || "?"}
+              {user.avatarUrl ? (
+                <Image
+                  src={user.avatarUrl}
+                  alt=""
+                  width={32}
+                  height={32}
+                  unoptimized
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                displayName.trim().charAt(0).toUpperCase() || "?"
+              )}
             </button>
             <div id="account-menu" popover="auto" className={styles.menu}>
               <div className={styles.menuHead}>
