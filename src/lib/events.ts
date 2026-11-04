@@ -69,9 +69,13 @@ export type EventSummary = {
   title: string;
   kind: EventKind;
   startsAt: Date;
+  endsAt: Date | null;
   timezone: string;
   orgName: string;
   cancelled: boolean;
+  capacity: number | null;
+  confirmedCount: number;
+  waitlistedCount: number;
 };
 
 export async function createOrg(
@@ -147,15 +151,25 @@ export async function listEventsForUser(
     title: string;
     kind: EventKind;
     starts_at: Date;
+    ends_at: Date | null;
     timezone: string;
     org_name: string;
     cancelled: boolean;
+    capacity: number | null;
+    confirmed: number;
+    waitlisted: number;
   }>(sql`
-    SELECT e.id, e.slug, e.title, e.kind, e.starts_at, e.timezone, o.name AS org_name,
-           e.cancelled_at IS NOT NULL AS cancelled
+    SELECT e.id, e.slug, e.title, e.kind, e.starts_at, e.ends_at, e.timezone, o.name AS org_name,
+           e.cancelled_at IS NOT NULL AS cancelled, e.capacity, c.confirmed, c.waitlisted
     FROM events e
     JOIN orgs o ON o.id = e.org_id
     JOIN org_members m ON m.org_id = e.org_id
+    CROSS JOIN LATERAL (
+      SELECT count(*) FILTER (WHERE r.status = 'confirmed')::int AS confirmed,
+             count(*) FILTER (WHERE r.status = 'waitlisted')::int AS waitlisted
+      FROM rsvps r
+      WHERE r.event_id = e.id
+    ) c
     WHERE m.user_id = ${userId}
     ORDER BY e.starts_at ASC, e.id ASC`);
   return rows.map((row) => ({
@@ -164,9 +178,13 @@ export async function listEventsForUser(
     title: row.title,
     kind: row.kind,
     startsAt: row.starts_at,
+    endsAt: row.ends_at,
     timezone: row.timezone,
     orgName: row.org_name,
     cancelled: row.cancelled,
+    capacity: row.capacity,
+    confirmedCount: row.confirmed,
+    waitlistedCount: row.waitlisted,
   }));
 }
 

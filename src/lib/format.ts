@@ -31,3 +31,10 @@ export function formatEventWhen(start: Date, end: Date | null, timeZone: string)
   if (from.day === to.day) return `${from.day} · ${from.time} – ${to.time} ${to.zone}`;
   return `${from.day} · ${from.time} ${from.zone} to ${to.day} · ${to.time} ${to.zone}`;
 }
+
+export function dateTile(date: Date, timeZone: string) {
+  const p = parts(date, timeZone);
+  const [weekday, monthDay, year] = p.day.split(", ");
+  const [month, day] = monthDay.split(" ");
+  return { weekday, month, day, year, time: p.time, zone: p.zone };
+}

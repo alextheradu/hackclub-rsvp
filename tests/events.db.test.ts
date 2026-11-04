@@ -245,6 +245,28 @@ describe("listEventsForUser", () => {
     expect((await listEventsForUser(userId))[0].cancelled).toBe(true);
   });
 
+  it("includes capacity and live RSVP counts", async () => {
+    const userId = await makeUser();
+    const orgId = await makeOrg(userId);
+    const created = await createEvent(userId, eventInput(orgId, { capacity: 50 }));
+    if (!created.ok) throw new Error("event setup failed");
+    await createEvent(userId, eventInput(orgId, { slug: "empty-one" }));
+    for (const [i, status] of ["confirmed", "confirmed", "waitlisted", "cancelled"].entries()) {
+      const guest = await makeUser(`ident!guest${i}`, `guest${i}@example.com`);
+      await getPool().query("INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)", [
+        created.id,
+        guest,
+        status,
+      ]);
+    }
+
+    const events = await listEventsForUser(userId);
+    const full = events.find((e) => e.id === created.id);
+    const empty = events.find((e) => e.slug === "empty-one");
+    expect(full).toMatchObject({ capacity: 50, confirmedCount: 2, waitlistedCount: 1, endsAt: null });
+    expect(empty).toMatchObject({ capacity: null, confirmedCount: 0, waitlistedCount: 0 });
+  });
+
   it("returns an empty list for a user with no orgs", async () => {
     const userId = await makeUser();
     expect(await listEventsForUser(userId)).toEqual([]);
@@ -262,6 +284,28 @@ describe("listOrgsForUser", () => {
       { id: expect.any(Number), name: "Alpha Club", slug: "alpha-club" },
       { id: expect.any(Number), name: "zebra club", slug: "zebra-club" },
     ]);
+  });
+
+  it("includes capacity and live RSVP counts", async () => {
+    const userId = await makeUser();
+    const orgId = await makeOrg(userId);
+    const created = await createEvent(userId, eventInput(orgId, { capacity: 50 }));
+    if (!created.ok) throw new Error("event setup failed");
+    await createEvent(userId, eventInput(orgId, { slug: "empty-one" }));
+    for (const [i, status] of ["confirmed", "confirmed", "waitlisted", "cancelled"].entries()) {
+      const guest = await makeUser(`ident!guest${i}`, `guest${i}@example.com`);
+      await getPool().query("INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)", [
+        created.id,
+        guest,
+        status,
+      ]);
+    }
+
+    const events = await listEventsForUser(userId);
+    const full = events.find((e) => e.id === created.id);
+    const empty = events.find((e) => e.slug === "empty-one");
+    expect(full).toMatchObject({ capacity: 50, confirmedCount: 2, waitlistedCount: 1, endsAt: null });
+    expect(empty).toMatchObject({ capacity: null, confirmedCount: 0, waitlistedCount: 0 });
   });
 
   it("returns an empty list for a user with no orgs", async () => {

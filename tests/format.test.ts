@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatEventWhen } from "@/lib/format";
+import { dateTile, formatEventWhen } from "@/lib/format";
 
 describe("formatEventWhen", () => {
   it("shows a start with its timezone abbreviation", () => {
@@ -38,5 +38,26 @@ describe("formatEventWhen", () => {
     expect(formatEventWhen(new Date("2026-12-01T10:00:00Z"), null, "Mars/Olympus")).toBe(
       "Tue, Dec 1, 2026 · 10:00 AM UTC",
     );
+  });
+});
+
+describe("dateTile", () => {
+  it("splits a date into tile parts in the event's timezone", () => {
+    expect(dateTile(new Date("2026-12-01T03:30:00Z"), "America/New_York")).toEqual({
+      weekday: "Mon",
+      month: "Nov",
+      day: "30",
+      year: "2026",
+      time: "10:30 PM",
+      zone: "EST",
+    });
+  });
+
+  it("falls back to UTC for an unknown timezone", () => {
+    expect(dateTile(new Date("2026-12-01T03:30:00Z"), "Not/AZone")).toMatchObject({
+      month: "Dec",
+      day: "1",
+      zone: "UTC",
+    });
   });
 });

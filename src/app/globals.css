@@ -75,4 +75,13 @@ html:has([data-no-overscroll]) {
   outline-offset: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* bippity boppity boo, this css is done too */

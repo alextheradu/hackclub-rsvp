@@ -2,6 +2,7 @@ import { verifySession } from "@/lib/session";
 import { q, sql } from "./db";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { cache } from "react";
 
 export type CurrentUser = {
   id: number;
@@ -45,10 +46,10 @@ export async function userFromSessionToken(
   };
 }
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const store = await cookies();
   await connection();
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new Error("SESSION_SECRET is not set");
   return userFromSessionToken(store.get("session")?.value, secret);
-}
+});
