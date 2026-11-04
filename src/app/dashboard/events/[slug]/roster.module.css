@@ -69,11 +69,11 @@ select.input {
 }
 
 .confirmed {
-  color: oklch(0.8 0.15 150);
+  color: var(--green);
 }
 
 .waitlisted {
-  color: oklch(0.83 0.13 85);
+  color: var(--yellow);
 }
 
 .cancelled {
@@ -127,9 +127,9 @@ select.input {
   gap: 10px;
   max-width: 340px;
   padding: 14px 16px;
-  border: 1px solid oklch(0.66 0.2 22 / 0.6);
+  border: 1px solid color-mix(in oklch, var(--danger) 60%, transparent);
   border-radius: var(--radius);
-  background: oklch(0.66 0.2 22 / 0.08);
+  background: color-mix(in oklch, var(--danger) 8%, transparent);
   animation: confirm-in 180ms var(--ease-out);
 }
 
@@ -146,7 +146,7 @@ select.input {
 }
 
 .error {
-  color: oklch(0.82 0.1 22);
+  color: var(--danger-text);
   font-size: 15px;
 }
 

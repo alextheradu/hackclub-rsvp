@@ -30,7 +30,7 @@
 
 .cancelled {
   margin-top: 24px;
-  color: oklch(0.74 0.14 25);
+  color: var(--danger);
   font-size: 17px;
   font-weight: 500;
 }

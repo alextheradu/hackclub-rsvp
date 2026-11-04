@@ -6,7 +6,7 @@
 
 .column {
   width: 100%;
-  max-width: 760px;
+  max-width: var(--container);
   margin: 0 auto;
   padding: 88px 24px 80px;
 }
@@ -20,16 +20,16 @@
 }
 
 .title {
-  font-size: clamp(2rem, 6vw, 2.75rem);
+  font-size: var(--text-xl);
   font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1.05;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .sub {
-  margin-top: 8px;
+  margin-top: 6px;
   color: var(--muted);
-  font-size: 17px;
+  font-size: var(--text-sm);
 }
 
 .list {
@@ -93,7 +93,7 @@
 }
 
 .cancelled {
-  color: oklch(0.74 0.14 25);
+  color: var(--danger);
 }
 
 .arrow {

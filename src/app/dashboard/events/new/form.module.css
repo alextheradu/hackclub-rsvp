@@ -141,10 +141,10 @@
 
 .error {
   padding: 10px 14px;
-  border: 1px solid oklch(0.66 0.2 22 / 0.6);
+  border: 1px solid color-mix(in oklch, var(--danger) 60%, transparent);
   border-radius: var(--radius);
-  background: oklch(0.66 0.2 22 / 0.12);
-  color: oklch(0.82 0.1 22);
+  background: color-mix(in oklch, var(--danger) 12%, transparent);
+  color: var(--danger-text);
   font-size: 15px;
 }
 

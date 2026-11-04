@@ -64,7 +64,10 @@ async function RosterContent({ params, searchParams }: Pick<Props, "params" | "s
 
   return (
     <>
-      <TopBar user={user} />
+      <TopBar
+        user={user}
+        crumbs={[{ label: "Events", href: "/dashboard" }, { label: event.title }]}
+      />
       <main className={dash.column}>
         <div className={`${dash.heading} ${styles.heading}`}>
           <div>

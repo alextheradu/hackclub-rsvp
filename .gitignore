@@ -30,6 +30,7 @@ docs/api.md
 references
 DESIGN.md
 PRODUCT.md
+.impeccable
 
 # debug
 npm-debug.log*

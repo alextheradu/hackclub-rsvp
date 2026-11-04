@@ -16,7 +16,10 @@ async function NewEventContent() {
 
   return (
     <>
-      <TopBar user={user} />
+      <TopBar
+        user={user}
+        crumbs={[{ label: "Events", href: "/dashboard" }, { label: "New event" }]}
+      />
       <main className={styles.column}>
         <div className={styles.heading}>
           <div>

@@ -1,0 +1,38 @@
+.chip {
+  --tone: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid color-mix(in oklch, var(--tone) 40%, transparent);
+  border-radius: 999px;
+  color: var(--tone);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip[data-tilt] {
+  transform: rotate(-2deg);
+}
+
+.chip[data-tone="green"] {
+  --tone: var(--green);
+}
+
+.chip[data-tone="yellow"] {
+  --tone: var(--yellow);
+}
+
+.chip[data-tone="cyan"] {
+  --tone: var(--cyan);
+}
+
+.chip[data-tone="orange"] {
+  --tone: var(--orange);
+}
+
+.chip[data-tone="red"] {
+  --tone: var(--danger);
+}

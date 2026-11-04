@@ -58,7 +58,7 @@ async function DashboardContent() {
 
   return (
     <>
-      <TopBar user={user} />
+      <TopBar user={user} crumbs={[{ label: "Events" }]} />
       <main className={styles.column}>
         <div className={styles.heading}>
           <div>
