@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateTile, formatEventWhen } from "@/lib/format";
+import { dateTile, formatEventWhen, timeAgo } from "@/lib/format";
 
 describe("formatEventWhen", () => {
   it("shows a start with its timezone abbreviation", () => {
@@ -59,5 +59,25 @@ describe("dateTile", () => {
       day: "1",
       zone: "UTC",
     });
+  });
+});
+
+describe("timeAgo", () => {
+  const now = new Date("2026-11-03T18:00:00Z");
+  const ago = (s: number) => new Date(now.getTime() - s * 1000);
+
+  it("counts up through minutes, hours and days", () => {
+    expect(timeAgo(ago(10), now)).toBe("just now");
+    expect(timeAgo(ago(5 * 60), now)).toBe("5m ago");
+    expect(timeAgo(ago(3 * 3600), now)).toBe("3h ago");
+    expect(timeAgo(ago(2 * 86400), now)).toBe("2d ago");
+  });
+
+  it("switches to a date after a week, in the given timezone", () => {
+    expect(timeAgo(new Date("2026-10-01T02:00:00Z"), now, "America/New_York")).toBe("Sep 30");
+  });
+
+  it("treats future dates as just now", () => {
+    expect(timeAgo(ago(-60), now)).toBe("just now");
   });
 });

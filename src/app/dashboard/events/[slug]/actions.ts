@@ -21,7 +21,7 @@ export async function cancelEventAction(
   const result = await cancelEvent(user.id, event.id);
   if (result === "not_member") return { error: "You can't cancel an event you don't organize." };
 
-  revalidatePath(`/dashboard/events/${slug}`);
+  revalidatePath(`/dashboard/events/${slug}`, "layout");
   revalidatePath("/dashboard");
   revalidatePath(`/e/${slug}`);
   return { error: null };

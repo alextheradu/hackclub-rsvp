@@ -1,0 +1,122 @@
+.head,
+.body {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.head {
+  padding-top: 56px;
+}
+
+.body {
+  padding-top: 28px;
+  padding-bottom: 80px;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.title {
+  min-width: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0 24px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.metaRest {
+  display: flex;
+  align-items: center;
+}
+
+.metaRest::before,
+.dot {
+  flex-shrink: 0;
+  width: 3px;
+  height: 3px;
+  margin: 0 10px;
+  border-radius: 999px;
+  background: var(--faint);
+}
+
+.metaRest::before {
+  content: "";
+}
+
+.skeleton {
+  display: block;
+  border-radius: 999px;
+  background: var(--raised);
+  animation: pulse 1.4s var(--ease-out) infinite alternate;
+}
+
+.skeletonTitle {
+  width: min(320px, 70%);
+  height: 30px;
+}
+
+.skeletonMeta {
+  width: min(260px, 60%);
+  height: 14px;
+  margin: 14px 0 28px;
+}
+
+.skeletonTabs {
+  height: 45px;
+  border-bottom: 1px solid var(--border);
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 640px) {
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .metaRest::before {
+    display: none;
+  }
+
+  .head,
+  .body {
+    padding-inline: 16px;
+  }
+
+  .head {
+    padding-top: 40px;
+  }
+
+  .body {
+    padding-top: 20px;
+    padding-bottom: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

@@ -38,3 +38,13 @@ export function dateTile(date: Date, timeZone: string) {
   const [month, day] = monthDay.split(" ");
   return { weekday, month, day, year, time: p.time, zone: p.zone };
 }
+
+export function timeAgo(date: Date, now: Date, timeZone = "UTC"): string {
+  const seconds = Math.max(0, (now.getTime() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 7 * 86400) return `${Math.floor(seconds / 86400)}d ago`;
+  const { month, day } = dateTile(date, timeZone);
+  return `${month} ${day}`;
+}

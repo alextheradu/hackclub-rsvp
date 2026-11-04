@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
-import { getRoster } from "@/lib/roster";
+import { getRecentRsvps, getRoster } from "@/lib/roster";
 import { cancelRsvp, createRsvp } from "@/lib/rsvps";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
@@ -160,3 +160,26 @@ describe("getRoster filters", () => {
   });
 });
 
+
+describe("getRecentRsvps", () => {
+  it("returns live RSVPs newest first, up to the limit", async () => {
+    const { organizer, eventId } = await setup();
+    const names = ["a", "b", "c", "d"];
+    for (const [i, name] of names.entries()) {
+      const id = await makeUser(name);
+      await getPool().query(
+        "INSERT INTO rsvps (event_id, user_id, status, created_at) VALUES ($1, $2, $3, now() - make_interval(mins => $4))",
+        [eventId, id, name === "c" ? "cancelled" : "confirmed", 10 - i],
+      );
+    }
+    const recent = await getRecentRsvps(organizer, eventId, 2);
+    expect(recent.map((r) => r.name)).toEqual(["d", "b"]);
+  });
+
+  it("returns nothing to someone outside the event's org", async () => {
+    const { outsider, eventId } = await setup();
+    const guest = await makeUser("guest");
+    await createRsvp(eventId, guest);
+    expect(await getRecentRsvps(outsider, eventId)).toEqual([]);
+  });
+});

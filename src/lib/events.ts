@@ -244,6 +244,14 @@ export async function getEventBySlug(slug: string): Promise<PublicEvent | null> 
   };
 }
 
+export async function canManageEvent(userId: number, eventId: number): Promise<boolean> {
+  const rows = await q().exec(sql`
+    SELECT 1 FROM events e
+    JOIN org_members m ON m.org_id = e.org_id
+    WHERE e.id = ${eventId} AND m.user_id = ${userId}`);
+  return rows > 0;
+}
+
 export type CancelEventResult = "ok" | "not_member" | "already_cancelled";
 
 export async function cancelEvent(userId: number, eventId: number): Promise<CancelEventResult> {

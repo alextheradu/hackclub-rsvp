@@ -1,3 +1,50 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.total {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.emptyRoster {
+  padding: 40px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.dangerZone {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.sectionTitle {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.sectionText {
+  max-width: 52ch;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
 .filters {
   display: flex;
   align-items: center;
@@ -87,15 +134,6 @@ select.input {
   text-align: right;
 }
 
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 @media (max-width: 640px) {
   .filters {
     flex-wrap: wrap;
@@ -110,16 +148,6 @@ select.input {
   }
 }
 
-.heading {
-  flex-wrap: wrap;
-}
-
-.actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
 .confirm {
   display: flex;
   flex-direction: column;
@@ -129,7 +157,6 @@ select.input {
   padding: 14px 16px;
   border: 1px solid color-mix(in oklch, var(--danger) 60%, transparent);
   border-radius: var(--radius);
-  background: color-mix(in oklch, var(--danger) 8%, transparent);
   animation: confirm-in 180ms var(--ease-out);
 }
 
@@ -150,16 +177,6 @@ select.input {
   font-size: 15px;
 }
 
-.notice {
-  margin: -20px 0 28px;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 15px;
-  line-height: 1.4;
-}
-
 @keyframes confirm-in {
   from {
     opacity: 0;
@@ -168,11 +185,6 @@ select.input {
 }
 
 @media (max-width: 640px) {
-  .actions {
-    flex-basis: 100%;
-    flex-wrap: wrap;
-  }
-
   .confirm {
     align-items: stretch;
     max-width: none;

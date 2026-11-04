@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
 import {
+  canManageEvent,
   createEvent,
   createOrg,
   getEventBySlug,
@@ -369,5 +370,18 @@ describe("getEventBySlug", () => {
 
   it("returns null for an unknown slug", async () => {
     expect(await getEventBySlug("nope-nope")).toBeNull();
+  });
+});
+
+describe("canManageEvent", () => {
+  it("is true only for members of the event's org", async () => {
+    const ada = await makeUser();
+    const grace = await makeUser("ident!grace", "grace@example.com");
+    const orgId = await makeOrg(ada);
+    const created = await createEvent(ada, eventInput(orgId));
+    if (!created.ok) throw new Error("event setup failed");
+    expect(await canManageEvent(ada, created.id)).toBe(true);
+    expect(await canManageEvent(grace, created.id)).toBe(false);
+    expect(await canManageEvent(ada, 999999)).toBe(false);
   });
 });
