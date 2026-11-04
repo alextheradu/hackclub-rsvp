@@ -101,8 +101,8 @@ npm run test
 <small>(yes yes i know this is a sign of an ai readme but i believe its useful for ppl who wanna make changes to this app)</small>
 
 ## api
-
-check out [docs/api.md](docs/api.md) 👍 (it's still a plan, the api isn't built yet!)
+not quite yet ✌️
+<!-- check out [docs/api.md](docs/api.md) 👍 (it's still a plan, the api isn't built yet!) -->
 
 ## deployment
 
