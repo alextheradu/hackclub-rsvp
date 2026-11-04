@@ -99,7 +99,7 @@ npm run test
 | `tests/`      | all of the tests                                              |
 | `docs/`       | plans and docs (like the api)                                 |
 
-<small>(yes yes i know this is a sign of an ai readme but i believe its useful for ppl who wanna make changes to this app)</small>
+(yes yes i know this is a sign of an ai readme but i believe its useful for ppl who wanna make changes to this app)
 
 ## api
 not quite yet ✌️
