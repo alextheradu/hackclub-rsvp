@@ -132,9 +132,16 @@ export function OverviewView({ event, counts, recent, now }: Props) {
         </section>
 
         <section aria-labelledby="details-heading">
-          <h2 id="details-heading" className={styles.label}>
-            Details
-          </h2>
+          <div className={styles.detailsHead}>
+            <h2 id="details-heading" className={styles.label}>
+              Details
+            </h2>
+            {!event.cancelled && (
+              <Link className={styles.more} href={`/dashboard/events/${event.slug}/settings`}>
+                Edit
+              </Link>
+            )}
+          </div>
           <dl className={styles.details}>
             <div>
               <dt>When</dt>

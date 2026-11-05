@@ -2,21 +2,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
+import { Segmented } from "@/components/Segmented";
 import { rosterHref, type RosterStatus } from "@/lib/roster-filter";
 import styles from "../roster.module.css";
 
 const DELAY_MS = 250;
 const MAX_LENGTH = 100;
 
+export type RosterTab = { status?: RosterStatus; label: string; count: number };
+
 type Props = {
   base: string;
   status?: RosterStatus;
   q: string;
+  tabs: RosterTab[];
+  // Shown next to the search box, e.g. the Export CSV button.
+  children?: ReactNode;
 };
 
-// Without JS this is a plain GET form. With JS it searches as you type.
-export function RosterSearch({ base, status, q }: Props) {
+// The search box and the status tabs. They live together so the tabs always
+// carry what's in the box, even before the delayed search has run.
+// Without JS the search is a plain GET form. With JS it searches as you type.
+export function RosterSearch({ base, status, q, tabs, children }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [value, setValue] = useState(q);
@@ -64,48 +80,75 @@ export function RosterSearch({ base, status, q }: Props) {
     }
   }
 
+  const search = value.trim().slice(0, MAX_LENGTH) || undefined;
+
   return (
-    <form
-      className={styles.search}
-      role="search"
-      action={base}
-      onSubmit={onSubmit}
-      aria-busy={isPending}
-      data-pending={isPending || undefined}
-    >
-      {status && <input type="hidden" name="status" value={status} />}
-      <label className={styles.searchField}>
-        <span className="sr-only">Search RSVPs</span>
-        <input
-          className={styles.input}
-          type="search"
-          name="q"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder="Name, email or Slack ID"
-          maxLength={MAX_LENGTH}
-          autoComplete="off"
-          spellCheck={false}
-          enterKeyHint="search"
-        />
-        <span className={styles.spinner} aria-hidden="true" />
-      </label>
-      {value && (
-        <Link
-          className={styles.clear}
-          href={rosterHref(base, { status })}
-          replace
-          scroll={false}
-          onClick={() => {
-            clearTimeout(timer.current);
-            setValue("");
-            setSent("");
-          }}
+    <>
+      <div className={styles.toolbar}>
+        <form
+          className={styles.search}
+          role="search"
+          action={base}
+          onSubmit={onSubmit}
+          aria-busy={isPending}
+          data-pending={isPending || undefined}
         >
-          Clear
-        </Link>
-      )}
-    </form>
+          {status && <input type="hidden" name="status" value={status} />}
+          <label className={styles.searchField}>
+            <span className="sr-only">Search RSVPs</span>
+            <input
+              className={styles.input}
+              type="search"
+              name="q"
+              value={value}
+              onChange={(event) => onChange(event.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="Name, email or Slack ID"
+              maxLength={MAX_LENGTH}
+              autoComplete="off"
+              spellCheck={false}
+              enterKeyHint="search"
+            />
+            <span className={styles.spinner} aria-hidden="true" />
+          </label>
+          {value && (
+            <Link
+              className={styles.clear}
+              href={rosterHref(base, { status })}
+              replace
+              scroll={false}
+              onClick={() => {
+                clearTimeout(timer.current);
+                setValue("");
+                setSent("");
+              }}
+            >
+              Clear
+            </Link>
+          )}
+        </form>
+        {children}
+      </div>
+
+      <div
+        className={styles.statusFilter}
+        onClickCapture={() => {
+          // The tab's link already has the search in it, so drop the delayed one.
+          clearTimeout(timer.current);
+          setSent(search ?? "");
+        }}
+      >
+        <Segmented
+          label="Filter by status"
+          value={status ?? "all"}
+          options={tabs.map((tab) => ({
+            value: tab.status ?? "all",
+            label: tab.label,
+            count: tab.count,
+            href: rosterHref(base, { status: tab.status, q: search }),
+          }))}
+        />
+      </div>
+    </>
   );
 }

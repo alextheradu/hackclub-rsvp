@@ -58,3 +58,19 @@ export function parseLocalDateTime(local: string, timeZone: string): Date | null
   if (candidates.size === 0) return null;
   return new Date(Math.min(...candidates));
 }
+
+// The inverse of parseLocalDateTime: the wall-clock time in timeZone, as a
+// datetime-local input value ("2026-11-21T09:00").
+export function toLocalDateTime(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: isValidTimeZone(timeZone) ? timeZone : "UTC",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}

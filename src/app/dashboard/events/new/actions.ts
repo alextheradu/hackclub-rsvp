@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { parseLocalDateTime } from "@/lib/datetime";
+import { parseEventChanges } from "@/lib/event-form";
 import {
   createEvent,
   createOrg,
@@ -12,10 +12,11 @@ import {
   type CreateEventResult,
 } from "@/lib/events";
 import { slugify, validateSlug, type EventKind } from "@/lib/slug";
-import { parseOptionalHttpUrl } from "@/lib/url";
 
 export type FormState = {
   error?: string;
+  // The input the error belongs to. Unset for errors about the whole form.
+  field?: string;
   values: Record<string, string>;
 };
 
@@ -30,10 +31,14 @@ const EVENT_ERRORS: Record<Extract<CreateEventResult, { ok: false }>["reason"], 
   not_member: "You are not a member of that organization.",
 };
 
-function field(formData: FormData, name: string): string {
-  const value = formData.get(name);
-  return typeof value === "string" ? value : "";
-}
+const ERROR_FIELD: Record<Extract<CreateEventResult, { ok: false }>["reason"], string> = {
+  title: "title",
+  dates: "endsLocal",
+  format: "slug",
+  reserved: "slug",
+  taken: "slug",
+  not_member: "org",
+};
 
 async function createOrgForUser(userId: number, name: string): Promise<number | null> {
   const base = slugify(name).slice(0, 35);
@@ -57,76 +62,35 @@ export async function createEventAction(
   const values = Object.fromEntries(
     [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string"),
   );
-  const fail = (error: string): FormState => ({ error, values });
+  const fail = (error: string, field?: string): FormState => ({ error, field, values });
+  const get = (name: string) => (values[name] ?? "").trim();
 
-  const title = field(formData, "title").trim();
-  if (!title) return fail(EVENT_ERRORS.title);
+  const kind = get("kind") as EventKind;
+  if (!KINDS.includes(kind)) return fail("Pick what kind of event this is.", "kind");
 
-  const kind = field(formData, "kind") as EventKind;
-  if (!KINDS.includes(kind)) return fail("Pick what kind of event this is.");
+  const parsed = parseEventChanges(values, kind);
+  if (!parsed.ok) return fail(parsed.error, parsed.field);
 
-  const slug = field(formData, "slug").trim() || slugify(title);
+  const slug = get("slug") || slugify(parsed.changes.title);
   const slugCheck = validateSlug(slug);
-  if (!slugCheck.ok) return fail(EVENT_ERRORS[slugCheck.reason]);
-
-  const timezone = field(formData, "timezone").trim() || "UTC";
-  const startsAt = parseLocalDateTime(field(formData, "startsLocal"), timezone);
-  if (!startsAt) {
-    return fail("Check the start time. It is missing, invalid, or does not exist in that timezone.");
-  }
-  const endsRaw = field(formData, "endsLocal").trim();
-  let endsAt: Date | null = null;
-  if (endsRaw) {
-    endsAt = parseLocalDateTime(endsRaw, timezone);
-    if (!endsAt) return fail("Check the end time. It is invalid or does not exist in that timezone.");
-  }
-
-  const capacityRaw = field(formData, "capacity").trim();
-  let capacity: number | null = null;
-  if (capacityRaw) {
-    capacity = Number(capacityRaw);
-    if (!Number.isInteger(capacity) || capacity < 1 || capacity > 100000) {
-      return fail("Capacity must be a whole number of 1 or more, or left empty.");
-    }
-  }
-
-  const website = parseOptionalHttpUrl(field(formData, "website"));
-  const onlineUrl = parseOptionalHttpUrl(field(formData, "onlineUrl"));
-  if (!website.ok || !onlineUrl.ok) {
-    return fail("Links must start with http:// or https://");
-  }
-
-  if (await isEventSlugTaken(slug)) return fail(EVENT_ERRORS.taken);
+  if (!slugCheck.ok) return fail(EVENT_ERRORS[slugCheck.reason], "slug");
+  if (await isEventSlugTaken(slug)) return fail(EVENT_ERRORS.taken, "slug");
 
   const orgs = await listOrgsForUser(user.id);
-  const orgChoice = field(formData, "org");
+  const orgChoice = get("org");
   let orgId: number;
   if (orgs.length > 0 && orgChoice !== "new") {
     orgId = Number(orgChoice);
-    if (!orgs.some((org) => org.id === orgId)) return fail(EVENT_ERRORS.not_member);
+    if (!orgs.some((org) => org.id === orgId)) return fail(EVENT_ERRORS.not_member, "org");
   } else {
-    const orgName = field(formData, "orgName").trim() || user.name || user.email;
+    const orgName = get("orgName") || user.name || user.email;
     const createdId = await createOrgForUser(user.id, orgName);
-    if (createdId === null) return fail("Could not create the organization. Try a different name.");
+    if (createdId === null) return fail("Could not create the organization. Try a different name.", "orgName");
     orgId = createdId;
   }
 
-  const description = field(formData, "description").trim();
-  const result = await createEvent(user.id, {
-    orgId,
-    slug,
-    title,
-    kind,
-    startsAt,
-    endsAt,
-    timezone,
-    description: description || null,
-    capacity,
-    website: kind === "ysws" ? website.url : null,
-    onlineUrl: onlineUrl.url,
-    locationDisplay: kind === "irl" ? field(formData, "locationDisplay").trim() || null : null,
-  });
-  if (!result.ok) return fail(EVENT_ERRORS[result.reason]);
+  const result = await createEvent(user.id, { orgId, slug, kind, ...parsed.changes });
+  if (!result.ok) return fail(EVENT_ERRORS[result.reason], ERROR_FIELD[result.reason]);
 
-  redirect("/dashboard");
+  redirect(`/dashboard/events/${result.slug}`);
 }

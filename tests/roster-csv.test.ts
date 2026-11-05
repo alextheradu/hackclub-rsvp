@@ -22,6 +22,7 @@ const entry = (overrides: Partial<RosterEntry> = {}): RosterEntry => ({
   name: "Ada",
   email: "ada@example.com",
   slackId: "U123",
+  avatarUrl: null,
   status: "confirmed",
   rsvpedAt: new Date("2026-10-31T12:00:00.000Z"),
   ...overrides,

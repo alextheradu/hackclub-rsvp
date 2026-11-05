@@ -32,30 +32,6 @@
   text-decoration-color: var(--foreground);
 }
 
-.dangerZone {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px 32px;
-  padding: 22px 24px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-}
-
-.sectionTitle {
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-
-.sectionText {
-  max-width: 52ch;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: var(--text-sm);
-  line-height: 1.5;
-}
-
 .search {
   display: flex;
   align-items: center;
@@ -144,38 +120,116 @@
 }
 
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) minmax(0, 120px) 88px 56px;
+  grid-template-areas: "avatar person slack status date";
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 24px;
+  column-gap: 16px;
+  padding: 14px 20px 14px 16px;
 }
 
-.rowSide {
+.avatar {
+  grid-area: avatar;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.person {
+  grid-area: person;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  font-size: 15px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.confirmed {
-  color: var(--green);
+.name,
+.email,
+.slack {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.waitlisted {
-  color: var(--yellow);
+.name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.cancelled {
+.email {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.slack {
+  grid-area: slack;
+  min-width: 0;
   color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.status {
+  grid-area: status;
+  display: flex;
 }
 
 .date {
-  min-width: 4.5em;
+  grid-area: date;
   color: var(--faint);
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   text-align: right;
+  white-space: nowrap;
+}
+
+.row[data-status="cancelled"] .avatar,
+.row[data-status="cancelled"] .person,
+.row[data-status="cancelled"] .slack {
+  opacity: 0.55;
+}
+
+.skeletonRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px 14px 16px;
+}
+
+.skeletonRow .person {
+  flex: 1;
+  gap: 6px;
+}
+
+.skeletonInput {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--radius);
+}
+
+.skeletonButton {
+  width: 112px;
+  height: 40px;
+}
+
+.skeletonTabs {
+  width: 300px;
+  max-width: 100%;
+  height: 36px;
 }
 
 @media (max-width: 640px) {
@@ -185,7 +239,26 @@
   }
 
   .row {
-    padding: 14px 20px;
+    grid-template-columns: 32px auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "avatar person person date"
+      "avatar status slack slack";
+    align-items: start;
+    row-gap: 8px;
+    column-gap: 12px;
+    padding: 14px 16px 14px 12px;
+  }
+
+  .avatar {
+    margin-top: 2px;
+  }
+
+  .date {
+    padding-top: 3px;
+  }
+
+  .slack {
+    align-self: center;
   }
 }
 

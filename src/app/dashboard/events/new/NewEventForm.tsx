@@ -1,319 +1,256 @@
 "use client";
 
-import {
-  startTransition,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
 import buttons from "@/components/buttons.module.css";
 import type { OrgSummary } from "@/lib/events";
-import { eventUrl, slugify, type EventKind } from "@/lib/slug";
+import { eventUrl, slugify, validateSlug, type EventKind, type SlugStatus } from "@/lib/slug";
+import {
+  ErrorText,
+  EventFields,
+  invalidProps,
+  useFocusError,
+  type FieldError,
+} from "../_components/EventFields";
+import styles from "../_components/form.module.css";
 import { createEventAction, type FormState } from "./actions";
-import styles from "./form.module.css";
 
 const INITIAL: FormState = { values: {} };
 
-let zonesCache: string[] | null = null;
-function getZones(): string[] {
-  zonesCache ??= ["UTC", ...Intl.supportedValuesOf("timeZone")];
-  return zonesCache;
+const SLUG_PROBLEM: Partial<Record<SlugStatus, string>> = {
+  reserved: "That URL name is reserved. Try another.",
+  taken: "That URL name is already taken. Try another.",
+};
+
+// Asks the server whether a URL name is free, 300ms after typing stops.
+function useSlugStatus(slug: string): SlugStatus | null {
+  const [remote, setRemote] = useState<{ slug: string; status: SlugStatus } | null>(null);
+  const local = slug ? validateSlug(slug) : null;
+
+  useEffect(() => {
+    if (!slug || !validateSlug(slug).ok) return;
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/dashboard/events/new/slug-check?slug=${encodeURIComponent(slug)}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const body = (await response.json()) as { status: SlugStatus };
+        setRemote({ slug, status: body.status });
+      } catch {
+        // Aborted or offline. The server checks again on submit.
+      }
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [slug]);
+
+  if (!local) return null;
+  if (!local.ok) return local.reason;
+  return remote?.slug === slug ? remote.status : null;
 }
-const NO_ZONES: string[] = [];
-const subscribeNothing = () => () => {};
 
 export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string }) {
   const [state, formAction, pending] = useActionState(createEventAction, INITIAL);
   const { values } = state;
+  const error: FieldError = useMemo(
+    () => (state.error && state.field ? { field: state.field, message: state.error } : null),
+    [state],
+  );
+  useFocusError(error);
 
   const [kind, setKind] = useState<EventKind>(values.kind === "irl" ? "irl" : "ysws");
   const [title, setTitle] = useState(values.title ?? "");
   const [slug, setSlug] = useState(values.slug ?? "");
-  const [slugTouched, setSlugTouched] = useState(Boolean(values.slug));
   const [org, setOrg] = useState(values.org ?? String(orgs[0]?.id ?? "new"));
-  const timezoneRef = useRef<HTMLInputElement>(null);
-  const zones = useSyncExternalStore(subscribeNothing, getZones, () => NO_ZONES);
 
   useEffect(() => {
-    const input = timezoneRef.current;
+    const input = document.getElementById("timezone") as HTMLInputElement | null;
     if (input && !input.value) {
       input.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
   }, []);
 
   const effectiveSlug = slug || slugify(title);
+  const slugStatus = useSlugStatus(effectiveSlug);
+  const submittedSlug = values.slug?.trim() || slugify(values.title ?? "");
+  const showServerSlugError = error?.field === "slug" && effectiveSlug === submittedSlug;
   const makingNewOrg = orgs.length === 0 || org === "new";
+
+  const slugField = (
+    <div className={styles.field}>
+      <label className={styles.label} htmlFor="slug">
+        URL name
+      </label>
+      <input
+        id="slug"
+        name="slug"
+        className={`${styles.input} ${styles.mono}`}
+        value={slug}
+        placeholder={slugify(title) || "my-event"}
+        maxLength={40}
+        autoComplete="off"
+        spellCheck={false}
+        aria-invalid={showServerSlugError || Boolean(slugStatus && SLUG_PROBLEM[slugStatus])}
+        aria-describedby="slug-hint"
+        onChange={(event) => setSlug(event.target.value.toLowerCase())}
+      />
+      <p id="slug-hint" className={styles.hint} aria-live="polite">
+        {showServerSlugError ? (
+          <span className={styles.fieldError}>{error.message}</span>
+        ) : slugStatus && SLUG_PROBLEM[slugStatus] ? (
+          <span className={styles.fieldError}>{SLUG_PROBLEM[slugStatus]}</span>
+        ) : slugStatus === "format" || !effectiveSlug ? (
+          "Lowercase letters, numbers and hyphens, 3 to 40 characters."
+        ) : (
+          <>
+            <span className={styles.mono}>{eventUrl({ kind, slug: effectiveSlug }, root)}</span>
+            {slugStatus === "ok" && <span className={styles.available}> · Available</span>}
+          </>
+        )}
+      </p>
+    </div>
+  );
 
   return (
     <form
       method="post"
-      className={styles.form}
+      className={styles.sections}
       aria-busy={pending}
       onSubmit={(event) => {
+        // A transition keeps what was typed if the server sends back an error.
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         startTransition(() => formAction(data));
       }}
     >
-      <div className={styles.kinds} role="radiogroup" aria-labelledby="kind-label">
-        <span id="kind-label" className={styles.label}>
-          What are you running?
-        </span>
-        <label className={styles.kind}>
-          <input
-            type="radio"
-            name="kind"
-            value="ysws"
-            checked={kind === "ysws"}
-            onChange={() => setKind("ysws")}
-          />
-          <span className={styles.kindName}>YSWS program</span>
-          <span className={styles.kindHint}>Online program</span>
-        </label>
-        <label className={styles.kind}>
-          <input
-            type="radio"
-            name="kind"
-            value="irl"
-            checked={kind === "irl"}
-            onChange={() => setKind("irl")}
-          />
-          <span className={styles.kindName}>IRL event</span>
-          <span className={styles.kindHint}>In person</span>
-        </label>
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="title">
-          Title
-        </label>
-        <input
-          id="title"
-          name="title"
-          className={styles.input}
-          value={title}
-          maxLength={120}
-          required
-          autoComplete="off"
-          onChange={(event) => {
-            setTitle(event.target.value);
-            if (!slugTouched) setSlug(slugify(event.target.value));
-          }}
-        />
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="slug">
-          URL name
-        </label>
-        <input
-          id="slug"
-          name="slug"
-          className={`${styles.input} ${styles.mono}`}
-          value={slug}
-          maxLength={40}
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(event) => {
-            setSlugTouched(true);
-            setSlug(event.target.value.toLowerCase());
-          }}
-        />
-        <p className={styles.hint}>
-          {effectiveSlug ? (
-            <span className={styles.mono}>{eventUrl({ kind, slug: effectiveSlug }, root)}</span>
-          ) : (
-            "Lowercase letters, numbers and hyphens, 3 to 40 characters."
-          )}
-        </p>
-      </div>
-
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="startsLocal">
-            Starts
-          </label>
-          <input
-            id="startsLocal"
-            name="startsLocal"
-            type="datetime-local"
-            className={styles.input}
-            defaultValue={values.startsLocal}
-            required
-          />
+      <section className={styles.section} aria-labelledby="kind-heading">
+        <div>
+          <h2 id="kind-heading" className={styles.sectionTitle}>
+            Kind
+          </h2>
+          <p className={styles.sectionText}>Decides what the event page asks for. You can&apos;t change it later.</p>
         </div>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="endsLocal">
-            Ends <span className={styles.optional}>optional</span>
-          </label>
-          <input
-            id="endsLocal"
-            name="endsLocal"
-            type="datetime-local"
-            className={styles.input}
-            defaultValue={values.endsLocal}
-          />
-        </div>
-      </div>
-
-      <div className={styles.row}>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="timezone">
-            Timezone
-          </label>
-          <input
-            id="timezone"
-            name="timezone"
-            ref={timezoneRef}
-            list="timezones"
-            className={styles.input}
-            defaultValue={values.timezone}
-            autoComplete="off"
-            spellCheck={false}
-            required
-          />
-          <datalist id="timezones">
-            {zones.map((zone) => (
-              <option key={zone} value={zone} />
-            ))}
-          </datalist>
-        </div>
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="capacity">
-            Capacity <span className={styles.optional}>optional</span>
-          </label>
-          <input
-            id="capacity"
-            name="capacity"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={100000}
-            className={styles.input}
-            defaultValue={values.capacity}
-            placeholder="No limit"
-          />
-        </div>
-      </div>
-
-      {kind === "ysws" ? (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="website">
-            Program website <span className={styles.optional}>optional</span>
-          </label>
-          <input
-            id="website"
-            name="website"
-            type="url"
-            className={styles.input}
-            defaultValue={values.website}
-            placeholder="https://"
-          />
-        </div>
-      ) : (
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="locationDisplay">
-              Where <span className={styles.optional}>optional</span>
+          <div className={styles.kinds} role="radiogroup" aria-labelledby="kind-heading">
+            <label className={styles.kind}>
+              <input
+                id="kind"
+                type="radio"
+                name="kind"
+                value="ysws"
+                checked={kind === "ysws"}
+                onChange={() => setKind("ysws")}
+              />
+              <span className={styles.kindName}>YSWS program</span>
+              <span className={styles.kindHint}>Online, with a program website</span>
             </label>
-            <input
-              id="locationDisplay"
-              name="locationDisplay"
-              className={styles.input}
-              defaultValue={values.locationDisplay}
-              placeholder="Brooklyn, NY"
-              maxLength={160}
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="onlineUrl">
-              Online link <span className={styles.optional}>optional</span>
+            <label className={styles.kind}>
+              <input
+                type="radio"
+                name="kind"
+                value="irl"
+                checked={kind === "irl"}
+                onChange={() => setKind("irl")}
+              />
+              <span className={styles.kindName}>IRL event</span>
+              <span className={styles.kindHint}>In person, with a place</span>
             </label>
-            <input
-              id="onlineUrl"
-              name="onlineUrl"
-              type="url"
-              className={styles.input}
-              defaultValue={values.onlineUrl}
-              placeholder="https://"
-            />
           </div>
+          <ErrorText name="kind" error={error} />
         </div>
-      )}
+      </section>
 
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="description">
-          Description <span className={styles.optional}>optional</span>
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          className={`${styles.input} ${styles.textarea}`}
-          defaultValue={values.description}
-          rows={4}
-          maxLength={4000}
+      <section className={styles.section} aria-labelledby="details-heading">
+        <div>
+          <h2 id="details-heading" className={styles.sectionTitle}>
+            Details
+          </h2>
+          <p className={styles.sectionText}>Shown on the public page. You can edit these later.</p>
+        </div>
+        <EventFields
+          kind={kind}
+          values={values}
+          error={error}
+          afterTitle={slugField}
+          onTitleChange={setTitle}
         />
-      </div>
+      </section>
 
-      {orgs.length > 0 && (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="org">
+      <section className={styles.section} aria-labelledby="org-heading">
+        <div>
+          <h2 id="org-heading" className={styles.sectionTitle}>
             Organization
-          </label>
-          <select
-            id="org"
-            name="org"
-            className={styles.input}
-            value={org}
-            onChange={(event) => setOrg(event.target.value)}
+          </h2>
+          <p className={styles.sectionText}>Events belong to an organization, so you can add organizers later.</p>
+        </div>
+        <div className={styles.fields}>
+          {orgs.length > 0 && (
+            <div className={styles.field}>
+              <label className="sr-only" htmlFor="org">
+                Organization
+              </label>
+              <select
+                id="org"
+                name="org"
+                className={styles.input}
+                value={org}
+                onChange={(event) => setOrg(event.target.value)}
+                {...invalidProps("org", error)}
+              >
+                {orgs.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+                <option value="new">New organization…</option>
+              </select>
+              <ErrorText name="org" error={error} />
+            </div>
+          )}
+
+          {makingNewOrg && (
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="orgName">
+                {orgs.length > 0 ? "New organization name" : "Organization name"}{" "}
+                <span className={styles.optional}>optional</span>
+              </label>
+              <input
+                id="orgName"
+                name="orgName"
+                className={styles.input}
+                defaultValue={values.orgName}
+                placeholder="Defaults to your name"
+                maxLength={80}
+                {...invalidProps("orgName", error)}
+              />
+              <ErrorText name="orgName" error={error} />
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className={styles.footer}>
+        {state.error && !state.field && (
+          <p className={styles.error} role="alert">
+            {state.error}
+          </p>
+        )}
+        <div className={styles.actions}>
+          <a className={`${buttons.btn} ${buttons.ghost}`} href="/dashboard">
+            Cancel
+          </a>
+          <button
+            type="submit"
+            className={`${buttons.btn} ${buttons.primary}`}
+            disabled={pending}
+            aria-busy={pending}
           >
-            {orgs.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-            <option value="new">New organization…</option>
-          </select>
+            {pending ? "Creating…" : "Create event"}
+          </button>
         </div>
-      )}
-
-      {makingNewOrg && (
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="orgName">
-            Organization name <span className={styles.optional}>optional</span>
-          </label>
-          <input
-            id="orgName"
-            name="orgName"
-            className={styles.input}
-            defaultValue={values.orgName}
-            placeholder="Defaults to your name"
-            maxLength={80}
-          />
-          <p className={styles.hint}>Events belong to an organization, so you can add organizers later.</p>
-        </div>
-      )}
-
-      {state.error && (
-        <p className={styles.error} role="alert">
-          {state.error}
-        </p>
-      )}
-
-      <div className={styles.actions}>
-        <a className={`${buttons.btn} ${buttons.ghost}`} href="/dashboard">
-          Cancel
-        </a>
-        <button
-          type="submit"
-          className={`${buttons.btn} ${buttons.primary}`}
-          disabled={pending}
-          aria-busy={pending}
-        >
-          {pending ? "Creating…" : "Create event"}
-        </button>
       </div>
     </form>
   );

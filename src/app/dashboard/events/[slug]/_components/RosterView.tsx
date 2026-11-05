@@ -1,9 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { PublicEvent } from "@/lib/events";
 import type { RosterCounts, RosterEntry } from "@/lib/roster";
 import { rosterHref, type RosterFilter, type RosterStatus } from "@/lib/roster-filter";
 import buttons from "@/components/buttons.module.css";
-import { Segmented } from "@/components/Segmented";
+import { Chip, type ChipTone } from "@/components/Chip";
 import dash from "../../../page.module.css";
 import styles from "../roster.module.css";
 import { RosterSearch } from "./RosterSearch";
@@ -20,8 +21,13 @@ const EMPTY_STATUS: Record<RosterStatus, string> = {
   cancelled: "No cancelled RSVPs.",
 };
 
-function formatRsvpedAt(date: Date, timeZone: string): string {
-  const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+const STATUS_TONE: Record<RosterStatus, ChipTone> = {
+  confirmed: "green",
+  waitlisted: "yellow",
+  cancelled: "neutral",
+};
+
+function formatDate(date: Date, timeZone: string, options: Intl.DateTimeFormatOptions): string {
   try {
     return new Intl.DateTimeFormat("en-US", { ...options, timeZone }).format(date);
   } catch {
@@ -29,19 +35,68 @@ function formatRsvpedAt(date: Date, timeZone: string): string {
   }
 }
 
-function RosterRow({ entry, timeZone }: { entry: RosterEntry; timeZone: string }) {
-  const meta = [entry.name ? entry.email : null, entry.slackId].filter(Boolean).join(" · ");
+function Avatar({ entry }: { entry: RosterEntry }) {
   return (
-    <li className={styles.row}>
-      <div className={dash.rowMain}>
-        <span className={dash.rowTitle}>{entry.name ?? entry.email}</span>
-        {meta && <span className={dash.rowMeta}>{meta}</span>}
+    <span className={styles.avatar} aria-hidden="true">
+      {entry.avatarUrl ? (
+        <Image src={entry.avatarUrl} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" />
+      ) : (
+        (entry.name ?? entry.email).trim().charAt(0).toUpperCase() || "?"
+      )}
+    </span>
+  );
+}
+
+function RosterRow({ entry, timeZone }: { entry: RosterEntry; timeZone: string }) {
+  return (
+    <li className={styles.row} data-status={entry.status}>
+      <Avatar entry={entry} />
+      <div className={styles.person}>
+        <span className={styles.name}>{entry.name ?? entry.email}</span>
+        {entry.name && <span className={styles.email}>{entry.email}</span>}
       </div>
-      <div className={styles.rowSide}>
-        <span className={styles[entry.status]}>{STATUS_LABEL[entry.status]}</span>
-        <span className={styles.date}>{formatRsvpedAt(entry.rsvpedAt, timeZone)}</span>
-      </div>
+      <span className={styles.slack}>
+        {entry.slackId && <span className="sr-only">Slack ID </span>}
+        {entry.slackId}
+      </span>
+      <span className={styles.status}>
+        <Chip tone={STATUS_TONE[entry.status]} tilt={false}>
+          {STATUS_LABEL[entry.status]}
+        </Chip>
+      </span>
+      <time
+        className={styles.date}
+        dateTime={entry.rsvpedAt.toISOString()}
+        title={`RSVPed ${formatDate(entry.rsvpedAt, timeZone, { dateStyle: "medium", timeStyle: "short" })}`}
+      >
+        {formatDate(entry.rsvpedAt, timeZone, { month: "short", day: "numeric" })}
+      </time>
     </li>
+  );
+}
+
+export function RosterSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <div className={styles.toolbar}>
+        <span className={`${dash.skeleton} ${styles.skeletonInput}`} />
+        <span className={`${dash.skeleton} ${styles.skeletonButton}`} />
+      </div>
+      <div className={styles.statusFilter}>
+        <span className={`${dash.skeleton} ${styles.skeletonTabs}`} />
+      </div>
+      <ul className={dash.list}>
+        {Array.from({ length: 6 }, (_, i) => (
+          <li key={i} className={styles.skeletonRow}>
+            <span className={`${dash.skeleton} ${styles.avatar}`} />
+            <span className={styles.person}>
+              <span className={`${dash.skeleton} ${dash.skeletonLine}`} />
+              <span className={`${dash.skeleton} ${dash.skeletonLineShort}`} />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -59,28 +114,19 @@ export function RosterView({ event, filter, roster, counts }: Props) {
 
   return (
     <>
-      <div className={styles.toolbar}>
-        <RosterSearch base={base} status={filter.status} q={filter.q ?? ""} />
+      <RosterSearch
+        base={base}
+        status={filter.status}
+        q={filter.q ?? ""}
+        tabs={[
+          { label: "All", count: counts.all },
+          ...statuses.map((status) => ({ status, label: STATUS_LABEL[status], count: counts[status] })),
+        ]}
+      >
         <a className={buttons.btn} href={`/dashboard/events/${event.slug}/roster.csv`} download>
           Export CSV
         </a>
-      </div>
-
-      <div className={styles.statusFilter}>
-        <Segmented
-          label="Filter by status"
-          value={filter.status ?? "all"}
-          options={[
-            { value: "all", label: "All", href: rosterHref(base, { q: filter.q }), count: counts.all },
-            ...statuses.map((status) => ({
-              value: status,
-              label: STATUS_LABEL[status],
-              href: rosterHref(base, { status, q: filter.q }),
-              count: counts[status],
-            })),
-          ]}
-        />
-      </div>
+      </RosterSearch>
 
       {roster.length === 0 ? (
         <p className={styles.emptyRoster}>

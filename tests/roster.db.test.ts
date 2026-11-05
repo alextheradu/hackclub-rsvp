@@ -70,10 +70,21 @@ describe("getRoster", () => {
       name: "ada",
       email: "ada@example.com",
       slackId: "U123",
+      avatarUrl: null,
       status: "confirmed",
     });
     expect(typeof roster![0].rsvpId).toBe("number");
     expect(roster![0].rsvpedAt).toBeInstanceOf(Date);
+  });
+
+  it("includes the attendee's Slack avatar", async () => {
+    const { organizer, eventId } = await setup();
+    const ada = await makeUser("ada", "U123");
+    const avatar = "https://avatars.slack-edge.com/2026-01-01/ada_192.png";
+    await getPool().query("UPDATE users SET avatar_url = $1 WHERE id = $2", [avatar, ada]);
+    await createRsvp(eventId, ada);
+    expect((await getRoster(organizer, eventId))![0].avatarUrl).toBe(avatar);
+    expect((await getRecentRsvps(organizer, eventId))[0].avatarUrl).toBe(avatar);
   });
 
   it("lists confirmed, then waitlisted, then cancelled, oldest first within each", async () => {

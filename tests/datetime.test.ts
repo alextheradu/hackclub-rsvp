@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseLocalDateTime } from "@/lib/datetime";
+import { parseLocalDateTime, toLocalDateTime } from "@/lib/datetime";
 
 const utc = (iso: string) => new Date(iso);
 
@@ -50,5 +50,26 @@ describe("parseLocalDateTime", () => {
     ["2026-12-01T10:60"],
   ])("rejects the malformed value %j", (local) => {
     expect(parseLocalDateTime(local, "UTC")).toBeNull();
+  });
+});
+
+describe("toLocalDateTime", () => {
+  it("formats the wall-clock time in the timezone", () => {
+    expect(toLocalDateTime(new Date("2026-11-21T14:00:00Z"), "America/New_York")).toBe("2026-11-21T09:00");
+  });
+
+  it("formats midnight as 00, not 24", () => {
+    expect(toLocalDateTime(new Date("2026-12-01T05:00:00Z"), "America/New_York")).toBe("2026-12-01T00:00");
+  });
+
+  it("round-trips with parseLocalDateTime", () => {
+    for (const local of ["2026-03-08T01:30", "2026-07-04T18:45", "2027-01-01T00:00"]) {
+      const date = parseLocalDateTime(local, "America/Los_Angeles")!;
+      expect(toLocalDateTime(date, "America/Los_Angeles")).toBe(local);
+    }
+  });
+
+  it("falls back to UTC for an unknown timezone", () => {
+    expect(toLocalDateTime(new Date("2026-11-21T14:00:00Z"), "Not/AZone")).toBe("2026-11-21T14:00");
   });
 });

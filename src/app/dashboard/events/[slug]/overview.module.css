@@ -214,6 +214,19 @@
   transform: translateX(2px);
 }
 
+.detailsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.detailsHead .label,
+.detailsHead .more {
+  margin: 0;
+}
+
 .details {
   display: flex;
   flex-direction: column;
