@@ -15,6 +15,9 @@ export function TopBar({ user, crumbs = [] }: Props) {
 
   return (
     <header className={styles.topbar}>
+      <a className={styles.skip} href="#main">
+        Skip to content
+      </a>
       <div className={styles.inner}>
         <div className={styles.left}>
           <Link className={styles.logo} href="/dashboard" aria-label="hackclub.rsvp, your events">

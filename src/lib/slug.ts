@@ -2,7 +2,6 @@ export type SlugResult = { ok: true } | { ok: false; reason: "format" | "reserve
 
 export type EventKind = "ysws" | "irl";
 
-// What the new-event form shows next to the URL name.
 export type SlugStatus = "ok" | "format" | "reserved" | "taken";
 
 const SLUG_FORMAT = /^[a-z0-9-]{3,40}$/;

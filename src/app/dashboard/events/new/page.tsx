@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -6,6 +7,8 @@ import { listOrgsForUser } from "@/lib/events";
 import { TopBar } from "../../_components/TopBar";
 import styles from "../../page.module.css";
 import { NewEventForm } from "./NewEventForm";
+
+export const metadata: Metadata = { title: "New event · hackclub.rsvp" };
 
 async function NewEventContent() {
   const user = await getCurrentUser();
@@ -20,7 +23,7 @@ async function NewEventContent() {
         user={user}
         crumbs={[{ label: "Events", href: "/dashboard" }, { label: "New event" }]}
       />
-      <main className={styles.column}>
+      <main id="main" className={styles.column}>
         <div className={styles.heading}>
           <div>
             <h1 className={styles.title}>New event</h1>

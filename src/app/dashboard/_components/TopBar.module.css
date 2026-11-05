@@ -6,6 +6,24 @@
   background: var(--background);
 }
 
+.skip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 50;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--raised);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.skip:focus-visible {
+  transform: none;
+}
+
 .inner {
   display: flex;
   align-items: center;

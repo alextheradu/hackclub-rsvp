@@ -1,11 +1,33 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { eventFormValues } from "@/lib/event-form";
 import { CancelEventButton } from "../CancelEventButton";
 import { EditEventForm } from "../_components/EditEventForm";
 import { getEventCounts, getManagedEvent } from "../data";
+import dash from "../../../page.module.css";
 import styles from "../settings.module.css";
 
 type Props = PageProps<"/dashboard/events/[slug]/settings">;
+
+export const metadata: Metadata = { title: "Settings" };
+
+function SettingsSkeleton() {
+  return (
+    <div className={styles.settings} aria-hidden="true">
+      <div className={styles.section}>
+        <div>
+          <span className={`${dash.skeleton} ${dash.skeletonLine}`} style={{ width: 80 }} />
+          <span className={`${dash.skeleton} ${dash.skeletonLineShort}`} />
+        </div>
+        <div className={styles.skeletonFields}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <span key={i} className={`${dash.skeleton} ${styles.skeletonInput}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 async function Settings({ params }: Pick<Props, "params">) {
   const { slug } = await params;
@@ -54,7 +76,7 @@ async function Settings({ params }: Pick<Props, "params">) {
 
 export default function SettingsPage({ params }: Props) {
   return (
-    <Suspense>
+    <Suspense fallback={<SettingsSkeleton />}>
       <Settings params={params} />
     </Suspense>
   );

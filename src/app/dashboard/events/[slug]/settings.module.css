@@ -54,6 +54,18 @@
   line-height: 1.5;
 }
 
+.skeletonFields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+}
+
+.skeletonInput {
+  height: 48px;
+  border-radius: var(--radius);
+}
+
 @media (max-width: 720px) {
   .section {
     grid-template-columns: minmax(0, 1fr);

@@ -30,7 +30,6 @@ export async function cancelEventAction(
 
 export type UpdateEventState = {
   error: string | null;
-  // The input the error belongs to. Unset for errors about the whole form.
   field?: string;
   saved: string | null;
 };

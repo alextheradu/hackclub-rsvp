@@ -2,7 +2,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { isEventSlugTaken } from "@/lib/events";
 import { validateSlug, type SlugStatus } from "@/lib/slug";
 
-// Lets the new-event form say whether a URL name is free while you type.
 export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return Response.json({ error: "Sign in first." }, { status: 401 });

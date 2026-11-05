@@ -8,7 +8,6 @@ import styles from "./form.module.css";
 
 export type FieldError = { field: string; message: string } | null;
 
-// Props that tie an input to its error message for screen readers.
 export function invalidProps(name: string, error: FieldError) {
   return error?.field === name
     ? { "aria-invalid": true, "aria-describedby": `${name}-error` }
@@ -24,7 +23,6 @@ export function ErrorText({ name, error }: { name: string; error: FieldError }) 
   );
 }
 
-// After a failed submit, move focus to the field that needs fixing.
 export function useFocusError(error: FieldError) {
   useEffect(() => {
     if (error) document.getElementById(error.field)?.focus();
@@ -35,13 +33,11 @@ type Props = {
   kind: EventKind;
   values: EventFormValues;
   error: FieldError;
-  // Rendered right under the title, e.g. the URL name on the new-event form.
   afterTitle?: ReactNode;
   onTitleChange?: (title: string) => void;
   capacityHint?: string;
 };
 
-// The fields the new-event and edit-event forms share.
 export function EventFields({
   kind,
   values,

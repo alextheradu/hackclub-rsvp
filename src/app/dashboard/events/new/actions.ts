@@ -15,7 +15,6 @@ import { slugify, validateSlug, type EventKind } from "@/lib/slug";
 
 export type FormState = {
   error?: string;
-  // The input the error belongs to. Unset for errors about the whole form.
   field?: string;
   values: Record<string, string>;
 };

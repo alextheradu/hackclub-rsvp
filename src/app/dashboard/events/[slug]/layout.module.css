@@ -15,6 +15,32 @@
   padding-bottom: 80px;
 }
 
+.tabError {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 28px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-card);
+}
+
+.tabErrorTitle {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.tabErrorText {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.tabErrorCode {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
 .titleLine {
   display: flex;
   align-items: center;

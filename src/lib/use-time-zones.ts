@@ -8,7 +8,7 @@ function getZones(): string[] {
 const NO_ZONES: string[] = [];
 const subscribeNothing = () => () => {};
 
-// Every IANA timezone for a datalist. Empty during server rendering.
+// Empty during server rendering.
 export function useTimeZones(): string[] {
   return useSyncExternalStore(subscribeNothing, getZones, () => NO_ZONES);
 }

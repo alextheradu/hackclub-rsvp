@@ -12,7 +12,6 @@
   min-width: 0;
 }
 
-/* The new-event page: a label column on the left, fields on the right. */
 .sections {
   display: flex;
   flex-direction: column;
@@ -174,7 +173,6 @@
   pointer-events: none;
 }
 
-/* Radio dot in the corner. */
 .kind::after {
   content: "";
   position: absolute;

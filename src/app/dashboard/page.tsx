@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -8,6 +9,8 @@ import buttons from "@/components/buttons.module.css";
 import { EventListSkeleton, EventListView } from "./_components/EventList";
 import { TopBar } from "./_components/TopBar";
 import styles from "./page.module.css";
+
+export const metadata: Metadata = { title: "Your events · hackclub.rsvp" };
 
 async function EventList({ searchParams }: { searchParams: PageProps<"/dashboard">["searchParams"] }) {
   const user = await getCurrentUser();
@@ -28,7 +31,7 @@ export default function DashboardPage({ searchParams }: PageProps<"/dashboard">)
       <Suspense fallback={<TopBar crumbs={[{ label: "Events" }]} />}>
         <DashboardTopBar />
       </Suspense>
-      <main className={styles.column}>
+      <main id="main" className={styles.column}>
         <div className={styles.heading}>
           <h1 className={styles.title}>Your events</h1>
           <Link className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">

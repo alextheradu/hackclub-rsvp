@@ -21,7 +21,6 @@ const SLUG_PROBLEM: Partial<Record<SlugStatus, string>> = {
   taken: "That URL name is already taken. Try another.",
 };
 
-// Asks the server whether a URL name is free, 300ms after typing stops.
 function useSlugStatus(slug: string): SlugStatus | null {
   const [remote, setRemote] = useState<{ slug: string; status: SlugStatus } | null>(null);
   const local = slug ? validateSlug(slug) : null;
@@ -78,6 +77,11 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
   const submittedSlug = values.slug?.trim() || slugify(values.title ?? "");
   const showServerSlugError = error?.field === "slug" && effectiveSlug === submittedSlug;
   const makingNewOrg = orgs.length === 0 || org === "new";
+  const hiddenFields = [
+    ...(kind === "ysws" ? ["locationDisplay", "onlineUrl"] : ["website"]),
+    ...(makingNewOrg ? []: ["orgName"]),
+  ];
+  const errorAtBottom = Boolean(state.error) && (!state.field || hiddenFields.includes(state.field));
 
   const slugField = (
     <div className={styles.field}>
@@ -233,7 +237,7 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
       </section>
 
       <div className={styles.footer}>
-        {state.error && !state.field && (
+        {errorAtBottom && (
           <p className={styles.error} role="alert">
             {state.error}
           </p>

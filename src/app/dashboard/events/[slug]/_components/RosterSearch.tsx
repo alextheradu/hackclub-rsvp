@@ -25,13 +25,11 @@ type Props = {
   status?: RosterStatus;
   q: string;
   tabs: RosterTab[];
-  // Shown next to the search box, e.g. the Export CSV button.
   children?: ReactNode;
 };
 
-// The search box and the status tabs. They live together so the tabs always
-// carry what's in the box, even before the delayed search has run.
-// Without JS the search is a plain GET form. With JS it searches as you type.
+// Tabs live here so their links carry the typed search before the delayed search runs.
+// Without JS the search is a plain GET form.
 export function RosterSearch({ base, status, q, tabs, children }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();

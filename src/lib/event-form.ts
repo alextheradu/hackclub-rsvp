@@ -18,7 +18,6 @@ export type ParsedEventChanges =
   | { ok: true; changes: EventChanges }
   | { ok: false; error: string; field: EventField };
 
-// What the edit form starts with for an existing event.
 export function eventFormValues(event: PublicEvent): EventFormValues {
   return {
     title: event.title,
