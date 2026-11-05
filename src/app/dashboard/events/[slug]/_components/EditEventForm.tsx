@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useMemo } from "react";
+import { useState, startTransition, useActionState, useMemo } from "react";
 import buttons from "@/components/buttons.module.css";
 import type { EventFormValues } from "@/lib/event-form";
 import type { EventKind } from "@/lib/slug";
@@ -25,16 +25,17 @@ export function EditEventForm({ slug, kind, initial }: Props) {
     [state],
   );
   useFocusError(error);
+  const [dirty, setDirty] = useState(false);
 
   return (
     <form
       method="post"
       className={form.form}
+      onChange={() => setDirty(true)}
       aria-busy={pending}
       onSubmit={(event) => {
-        // Submitting through a transition keeps what was typed. A plain form
-        // action would reset the fields to their defaults after saving.
         event.preventDefault();
+        setDirty(false);
         const data = new FormData(event.currentTarget);
         startTransition(() => formAction(data));
       }}
@@ -54,7 +55,7 @@ export function EditEventForm({ slug, kind, initial }: Props) {
 
       <div className={styles.saveRow}>
         <p className={styles.saved} role="status">
-          {!pending && state.saved}
+          {!pending && !dirty && state.saved}
         </p>
         <button
           type="submit"
