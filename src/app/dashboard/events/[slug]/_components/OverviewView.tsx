@@ -3,10 +3,12 @@ import { capacityTone } from "@/lib/event-list";
 import type { PublicEvent } from "@/lib/events";
 import { formatEventWhen, timeAgo } from "@/lib/format";
 import type { RosterEntry } from "@/lib/roster";
+import type { TimelinePoint } from "@/lib/rsvp-timeline";
 import type { RsvpSummary } from "@/lib/rsvps";
 import { eventUrl } from "@/lib/slug";
 import { Chip } from "@/components/Chip";
 import { ShareLink } from "../ShareLink";
+import { RsvpChart } from "./RsvpChart";
 import styles from "../overview.module.css";
 
 function plural(n: number, one: string, many: string) {
@@ -17,10 +19,11 @@ type Props = {
   event: PublicEvent;
   counts: Pick<RsvpSummary, "confirmedCount" | "waitlistedCount">;
   recent: RosterEntry[];
+  timeline: TimelinePoint[];
   now: Date;
 };
 
-export function OverviewView({ event, counts, recent, now }: Props) {
+export function OverviewView({ event, counts, recent, timeline, now }: Props) {
   const going = counts.confirmedCount;
   const total = going + counts.waitlistedCount;
   const left =
@@ -91,6 +94,8 @@ export function OverviewView({ event, counts, recent, now }: Props) {
               )}
             </p>
           )}
+
+          <RsvpChart points={timeline} capacity={event.capacity} />
 
           <div className={styles.recent}>
             <h3 className={styles.recentHeading}>Latest</h3>

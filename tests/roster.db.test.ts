@@ -1,7 +1,12 @@
 import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
-import { getRecentRsvps, getRoster, getRosterCounts } from "@/lib/roster";
+import {
+  getRecentRsvps,
+  getRoster,
+  getRosterCounts,
+  getRsvpDays,
+} from "@/lib/roster";
 import { cancelRsvp, createRsvp } from "@/lib/rsvps";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
@@ -262,5 +267,42 @@ describe("getRecentRsvps", () => {
     const guest = await makeUser("guest");
     await createRsvp(eventId, guest);
     expect(await getRecentRsvps(outsider, eventId)).toEqual([]);
+  });
+});
+
+describe("getRsvpDays", () => {
+  async function rsvpAt(
+    eventId: number,
+    name: string,
+    at: string,
+    status = "confirmed",
+  ) {
+    const id = await makeUser(name);
+    await getPool().query(
+      "INSERT INTO rsvps (event_id, user_id, status, created_at) VALUES ($1, $2, $3, $4)",
+      [eventId, id, status, at],
+    );
+  }
+
+  it("counts live RSVPs per day in the event's timezone", async () => {
+    const { organizer, eventId } = await setup();
+    await getPool().query(
+      "UPDATE events SET timezone = 'America/New_York' WHERE id = $1",
+      [eventId],
+    );
+    await rsvpAt(eventId, "a", "2026-11-03T15:00:00Z");
+    await rsvpAt(eventId, "b", "2026-11-04T03:30:00Z"); // 10:30pm on Nov 3 in New York
+    await rsvpAt(eventId, "c", "2026-11-04T15:00:00Z");
+    await rsvpAt(eventId, "d", "2026-11-04T16:00:00Z", "cancelled");
+    expect(await getRsvpDays(organizer, eventId)).toEqual([
+      { day: "2026-11-03", count: 2 },
+      { day: "2026-11-04", count: 1 },
+    ]);
+  });
+
+  it("returns nothing to someone outside the event's org", async () => {
+    const { outsider, eventId } = await setup();
+    await rsvpAt(eventId, "a", "2026-11-03T15:00:00Z");
+    expect(await getRsvpDays(outsider, eventId)).toEqual([]);
   });
 });

@@ -4,6 +4,7 @@ import {
   type RosterFilter,
   type RosterStatus,
 } from "@/lib/roster-filter";
+import type { DayCount } from "@/lib/rsvp-timeline";
 
 export type RosterEntry = {
   rsvpId: number;
@@ -109,4 +110,19 @@ export async function getRecentRsvps(
     ORDER BY r.created_at DESC, r.id DESC
     LIMIT ${limit}`);
   return rows.map(toEntry);
+}
+
+export async function getRsvpDays(
+  userId: number,
+  eventId: number,
+): Promise<DayCount[]> {
+  return q().many<DayCount>(sql`
+    SELECT to_char(r.created_at AT TIME ZONE e.timezone, 'YYYY-MM-DD') AS day,
+           count(*)::int AS count
+    FROM rsvps r
+    JOIN events e ON e.id = r.event_id
+    JOIN org_members m ON m.org_id = e.org_id AND m.user_id = ${userId}
+    WHERE r.event_id = ${eventId} AND r.status <> 'cancelled'
+    GROUP BY day
+    ORDER BY day`);
 }
