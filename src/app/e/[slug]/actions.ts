@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getEventBySlug } from "@/lib/events";
 import { cancelRsvp, createRsvp } from "@/lib/rsvps";
+import { hit, RATE_LIMIT_MESSAGE } from "@/lib/ratelimit";
 import { validateSlug } from "@/lib/slug";
 
 async function resolve(slug: string) {
@@ -25,12 +26,17 @@ const ERRORS = {
   not_eligible: "This event is only for HCA verified people.",
 } as const;
 
+async function allowed(userId: number): Promise<boolean> {
+  return (await hit(`rsvp:user:${userId}`, 10, 60)).allowed;
+}
+
 export async function rsvpAction(
   slug: string,
   _prev: RsvpFormState,
 ): Promise<RsvpFormState> {
   const ctx = await resolve(slug);
   if (!ctx) return { message: "Event not found." };
+  if (!(await allowed(ctx.user.id))) return { message: RATE_LIMIT_MESSAGE };
   const result = await createRsvp(ctx.event.id, ctx.user.id);
   revalidatePath(`/e/${slug}`);
   return { message: "error" in result ? ERRORS[result.error] : null };
@@ -39,6 +45,7 @@ export async function rsvpAction(
 export async function cancelAction(slug: string): Promise<void> {
   const ctx = await resolve(slug);
   if (!ctx) return;
+  if (!(await allowed(ctx.user.id))) return;
   await cancelRsvp(ctx.event.id, ctx.user.id);
   revalidatePath(`/e/${slug}`);
 }

@@ -14,7 +14,6 @@ export function isSlackAvatarUrl(value: unknown): value is string {
   }
 }
 
-// Needs the users:read scope. Any failure returns null so login never waits on Slack.
 export async function fetchSlackAvatar(
   slackId: string | null | undefined,
 ): Promise<string | null> {

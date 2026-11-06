@@ -6,6 +6,7 @@ import {
   fetchUserinfo,
   safeReturnTo,
 } from "@/lib/hca";
+import { clientIp, hit, tooManyRequests } from "@/lib/ratelimit";
 import { signSession } from "@/lib/session";
 import { fetchSlackAvatar } from "@/lib/slack";
 import { upsertUser } from "@/lib/users";
@@ -13,6 +14,9 @@ import { upsertUser } from "@/lib/users";
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60;
 
 export async function GET(request: Request) {
+  if (!(await hit(`callback:ip:${clientIp(request)}`, 20, 60)).allowed) {
+    return tooManyRequests();
+  }
   const store = await cookies();
   const secret = process.env.SESSION_SECRET;
   if (!secret) throw new Error("SESSION_SECRET is not set");
@@ -21,6 +25,8 @@ export async function GET(request: Request) {
   if (!checkState(store.get("hca_state")?.value, params.get("state"))) {
     return new Response("Invalid state", { status: 400 });
   }
+  // One try per state, so a failed login can't be replayed with made-up codes.
+  store.delete("hca_state");
   if (params.get("error")) {
     store.delete("hca_state");
     store.delete("hca_return_to");
@@ -46,7 +52,6 @@ export async function GET(request: Request) {
   }
 
   const returnTo = safeReturnTo(store.get("hca_return_to")?.value ?? null);
-  store.delete("hca_state");
   store.delete("hca_return_to");
   store.set("session", signSession({ uid }, secret), {
     httpOnly: true,

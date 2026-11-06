@@ -21,3 +21,19 @@ export async function hit(
 
   return { allowed: count <= limit, remaining: Math.max(limit - count, 0) };
 }
+
+export const RATE_LIMIT_MESSAGE =
+  "You've been rate-limited. Please wait a minute or more and try again.";
+
+// Every request reaches the app through the Cloudflare Tunnel, so this header
+// is the real visitor. Don't trust it on a server people can reach directly.
+export function clientIp(request: Request): string {
+  return request.headers.get("cf-connecting-ip") ?? "unknown";
+}
+
+export function tooManyRequests(retryAfterSeconds = 60): Response {
+  return new Response(RATE_LIMIT_MESSAGE, {
+    status: 429,
+    headers: { "Retry-After": String(retryAfterSeconds) },
+  });
+}

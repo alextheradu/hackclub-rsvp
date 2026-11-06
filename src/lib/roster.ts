@@ -73,7 +73,6 @@ export async function getRoster(
   return rows.map(toEntry);
 }
 
-// Counts per status for the roster filter. The search applies, the status filter doesn't.
 export async function getRosterCounts(
   userId: number,
   eventId: number,

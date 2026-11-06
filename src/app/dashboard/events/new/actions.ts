@@ -11,6 +11,7 @@ import {
   listOrgsForUser,
   type CreateEventResult,
 } from "@/lib/events";
+import { hit, RATE_LIMIT_MESSAGE } from "@/lib/ratelimit";
 import { slugify, validateSlug, type EventKind } from "@/lib/slug";
 
 export type FormState = {
@@ -80,6 +81,10 @@ export async function createEventAction(
     values,
   });
   const get = (name: string) => (values[name] ?? "").trim();
+
+  if (!(await hit(`create-event:user:${user.id}`, 10, 3600)).allowed) {
+    return fail(RATE_LIMIT_MESSAGE);
+  }
 
   const kind = get("kind") as EventKind;
   if (!KINDS.includes(kind))

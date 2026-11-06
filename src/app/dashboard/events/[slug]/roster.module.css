@@ -70,7 +70,6 @@
   transition: opacity 150ms var(--ease-out);
 }
 
-/* Delay so quick results don't flash the spinner. */
 .search[data-pending] .spinner {
   opacity: 1;
   transition-delay: 200ms;

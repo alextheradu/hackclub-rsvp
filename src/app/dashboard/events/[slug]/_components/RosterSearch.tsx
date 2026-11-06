@@ -28,7 +28,6 @@ type Props = {
   children?: ReactNode;
 };
 
-// Tabs live here so their links carry the typed search before the delayed search runs.
 export function RosterSearch({ base, status, q, tabs, children }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -37,7 +36,6 @@ export function RosterSearch({ base, status, q, tabs, children }: Props) {
   const [seen, setSeen] = useState(q);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // The URL changed without us (back button, the empty state's Clear search link).
   if (q !== seen) {
     setSeen(q);
     if (q !== sent) {
@@ -132,7 +130,6 @@ export function RosterSearch({ base, status, q, tabs, children }: Props) {
       <div
         className={styles.statusFilter}
         onClickCapture={() => {
-          // The tab's link already has the search in it, so drop the delayed one.
           clearTimeout(timer.current);
           setSent(search ?? "");
         }}

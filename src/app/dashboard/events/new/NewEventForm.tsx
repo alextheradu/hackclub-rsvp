@@ -54,9 +54,7 @@ function useSlugStatus(slug: string): SlugStatus | null {
         if (!response.ok) return;
         const body = (await response.json()) as { status: SlugStatus };
         setRemote({ slug, status: body.status });
-      } catch {
-        // Aborted or offline. The server checks again on submit.
-      }
+      } catch {}
     }, 300);
     return () => {
       clearTimeout(timer);
@@ -167,7 +165,6 @@ export function NewEventForm({
       className={styles.sections}
       aria-busy={pending}
       onSubmit={(event) => {
-        // A transition keeps what was typed if the server sends back an error.
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         startTransition(() => formAction(data));

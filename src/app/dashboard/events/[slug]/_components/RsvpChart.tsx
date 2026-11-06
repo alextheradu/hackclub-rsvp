@@ -8,7 +8,6 @@ const WIDTH = 600;
 const HEIGHT = 140;
 
 function formatDay(day: string): string {
-  // The day is already in the event's timezone, so format it as-is.
   return new Date(`${day}T00:00:00Z`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",

@@ -16,7 +16,6 @@ async function Overview({ params }: Pick<Props, "params">) {
     getRsvpDays(user.id, event.id),
   ]);
 
-  // From the first RSVP to today, or to the event's last day once it's over.
   const now = new Date();
   const today = toLocalDateTime(now, event.timezone).slice(0, 10);
   const lastDay = toLocalDateTime(event.endsAt ?? event.startsAt, event.timezone).slice(0, 10);

@@ -10,6 +10,7 @@ import {
   updateEvent,
   type UpdateEventResult,
 } from "@/lib/events";
+import { hit, RATE_LIMIT_MESSAGE } from "@/lib/ratelimit";
 import { validateSlug } from "@/lib/slug";
 
 export type CancelEventState = { error: string | null };
@@ -20,6 +21,9 @@ export async function cancelEventAction(
 ): Promise<CancelEventState> {
   const user = await getCurrentUser();
   if (!user) redirect(`/login?returnTo=/dashboard/events/${slug}`);
+  if (!(await hit(`cancel-event:user:${user.id}`, 10, 60)).allowed) {
+    return { error: RATE_LIMIT_MESSAGE };
+  }
 
   const event = validateSlug(slug).ok ? await getEventBySlug(slug) : null;
   if (!event) return { error: "Event not found." };
@@ -83,6 +87,10 @@ export async function updateEventAction(
     field,
     saved: null,
   });
+
+  if (!(await hit(`update-event:user:${user.id}`, 30, 60)).allowed) {
+    return fail(RATE_LIMIT_MESSAGE);
+  }
 
   const event = validateSlug(slug).ok ? await getEventBySlug(slug) : null;
   if (!event) return fail("Event not found.");
