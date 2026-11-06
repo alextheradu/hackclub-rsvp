@@ -2,8 +2,19 @@ import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { buildAuthorizeUrl, safeReturnTo } from "@/lib/hca";
+import { hit } from "@/lib/ratelimit";
 
 export async function GET(request: Request) {
+  const ip = request.headers.get("cf-connecting-ip") ?? "unknown";
+  if (!(await hit(`login:ip:${ip}`, 20, 60)).allowed) {
+    return new Response(
+      "You've been rate-limited. Please wait a minute or more and try again.",
+      {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      },
+    );
+  }
   const store = await cookies();
   const returnTo = safeReturnTo(
     new URL(request.url).searchParams.get("returnTo"),
