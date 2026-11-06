@@ -195,14 +195,20 @@ export async function listOrgsForUser(userId: number): Promise<OrgSummary[]> {
     JOIN org_members m ON m.org_id = o.id
     WHERE m.user_id = ${userId}
     ORDER BY lower(o.name), o.id`);
-  return rows.map((row) => ({ id: Number(row.id), name: row.name, slug: row.slug }));
+  return rows.map((row) => ({
+    id: Number(row.id),
+    name: row.name,
+    slug: row.slug,
+  }));
 }
 
 export async function isEventSlugTaken(slug: string): Promise<boolean> {
   return (await q().exec(sql`SELECT 1 FROM events WHERE slug = ${slug}`)) !== 0;
 }
 
-export async function getEventBySlug(slug: string): Promise<PublicEvent | null> {
+export async function getEventBySlug(
+  slug: string,
+): Promise<PublicEvent | null> {
   const row = await q().maybe<{
     id: string;
     slug: string;
@@ -244,7 +250,10 @@ export async function getEventBySlug(slug: string): Promise<PublicEvent | null> 
   };
 }
 
-export async function canManageEvent(userId: number, eventId: number): Promise<boolean> {
+export async function canManageEvent(
+  userId: number,
+  eventId: number,
+): Promise<boolean> {
   const rows = await q().exec(sql`
     SELECT 1 FROM events e
     JOIN org_members m ON m.org_id = e.org_id
@@ -254,7 +263,10 @@ export async function canManageEvent(userId: number, eventId: number): Promise<b
 
 export type CancelEventResult = "ok" | "not_member" | "already_cancelled";
 
-export async function cancelEvent(userId: number, eventId: number): Promise<CancelEventResult> {
+export async function cancelEvent(
+  userId: number,
+  eventId: number,
+): Promise<CancelEventResult> {
   return withTx(async (client) => {
     const db = q(client);
     const event = await db.maybe<{ cancelled_at: Date | null }>(sql`
@@ -264,7 +276,9 @@ export async function cancelEvent(userId: number, eventId: number): Promise<Canc
       FOR UPDATE OF e`);
     if (!event) return "not_member";
     if (event.cancelled_at !== null) return "already_cancelled";
-    await db.exec(sql`UPDATE events SET cancelled_at = now() WHERE id = ${eventId}`);
+    await db.exec(
+      sql`UPDATE events SET cancelled_at = now() WHERE id = ${eventId}`,
+    );
     await db.exec(sql`
       INSERT INTO outbox (channel, kind, payload, dedupe_key)
       SELECT 'email', 'event_cancelled', json_build_object('rsvpId', r.id), 'event_cancelled_' || r.id
@@ -312,14 +326,19 @@ export async function updateEvent(
       WHERE e.id = ${eventId} AND m.user_id = ${userId}
       FOR UPDATE OF e`);
     if (!event) return { ok: false as const, reason: "not_member" as const };
-    if (event.cancelled_at !== null) return { ok: false as const, reason: "cancelled" as const };
+    if (event.cancelled_at !== null)
+      return { ok: false as const, reason: "cancelled" as const };
 
     if (changes.capacity !== null) {
       const { confirmed } = await db.one<{ confirmed: number }>(sql`
         SELECT count(*)::int AS confirmed FROM rsvps
         WHERE event_id = ${eventId} AND status = 'confirmed'`);
       if (changes.capacity < confirmed) {
-        return { ok: false as const, reason: "capacity" as const, confirmedCount: confirmed };
+        return {
+          ok: false as const,
+          reason: "capacity" as const,
+          confirmedCount: confirmed,
+        };
       }
     }
 

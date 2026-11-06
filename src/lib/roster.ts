@@ -1,5 +1,9 @@
 import { q, sql } from "@/lib/db";
-import { likePattern, type RosterFilter, type RosterStatus } from "@/lib/roster-filter";
+import {
+  likePattern,
+  type RosterFilter,
+  type RosterStatus,
+} from "@/lib/roster-filter";
 
 export type RosterEntry = {
   rsvpId: number;
@@ -35,7 +39,11 @@ function toEntry(row: EntryRow): RosterEntry {
 
 export type RosterCounts = Record<RosterStatus, number> & { all: number };
 
-async function isEventMember(db: ReturnType<typeof q>, userId: number, eventId: number): Promise<boolean> {
+async function isEventMember(
+  db: ReturnType<typeof q>,
+  userId: number,
+  eventId: number,
+): Promise<boolean> {
   const rows = await db.exec(sql`
     SELECT 1 FROM events e
     JOIN org_members m ON m.org_id = e.org_id

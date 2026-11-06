@@ -23,7 +23,10 @@ afterAll(async () => {
 
 function fakeTransport() {
   const sent: (Mail & { from: string })[] = [];
-  return { sent, sendMail: async (mail: Mail & { from: string }) => void sent.push(mail) };
+  return {
+    sent,
+    sendMail: async (mail: Mail & { from: string }) => void sent.push(mail),
+  };
 }
 
 async function setup(capacity: number | null = null) {
@@ -32,7 +35,9 @@ async function setup(capacity: number | null = null) {
     `INSERT INTO users (hca_id, email, name) VALUES ('ident!a', 'ada@example.com', 'Ada'), ('ident!b', 'grace@example.com', 'Grace')
      RETURNING id`,
   );
-  const org = await pool.query("INSERT INTO orgs (name, slug) VALUES ('Hack Club', 'hack-club') RETURNING id");
+  const org = await pool.query(
+    "INSERT INTO orgs (name, slug) VALUES ('Hack Club', 'hack-club') RETURNING id",
+  );
   const event = await pool.query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind, capacity, timezone)
      VALUES ($1, 'hack-night', 'Hack Night', now() + interval '7 days', 'irl', $2, 'America/New_York') RETURNING id`,
@@ -50,7 +55,9 @@ describe("emailSender", () => {
     const { ada, eventId } = await setup();
     await createRsvp(eventId, ada);
     const transport = fakeTransport();
-    const result = await runOutboxOnce({ email: emailSender(transport, "RSVP <alex@alexradu.co>") });
+    const result = await runOutboxOnce({
+      email: emailSender(transport, "RSVP <alex@alexradu.co>"),
+    });
     expect(result.sent).toBe(1);
     expect(transport.sent).toHaveLength(1);
     expect(transport.sent[0]).toMatchObject({
@@ -67,9 +74,9 @@ describe("emailSender", () => {
     await createRsvp(eventId, grace);
     const transport = fakeTransport();
     await runOutboxOnce({ email: emailSender(transport, "a@b.c") });
-    expect(transport.sent.find((m) => m.to === "grace@example.com")?.subject).toBe(
-      "You're on the waitlist for Hack Night",
-    );
+    expect(
+      transport.sent.find((m) => m.to === "grace@example.com")?.subject,
+    ).toBe("You're on the waitlist for Hack Night");
   });
 
   it("only sends the promotion when they were promoted before the waitlist email went out", async () => {
@@ -79,7 +86,9 @@ describe("emailSender", () => {
     await cancelRsvp(eventId, ada);
     const transport = fakeTransport();
     await runOutboxOnce({ email: emailSender(transport, "a@b.c") });
-    const toGrace = transport.sent.filter((m) => m.to === "grace@example.com").map((m) => m.subject);
+    const toGrace = transport.sent
+      .filter((m) => m.to === "grace@example.com")
+      .map((m) => m.subject);
     expect(toGrace).toEqual(["A spot opened up: you're going to Hack Night"]);
   });
 
@@ -88,7 +97,9 @@ describe("emailSender", () => {
     await createRsvp(eventId, ada);
     await cancelRsvp(eventId, ada);
     const transport = fakeTransport();
-    const result = await runOutboxOnce({ email: emailSender(transport, "a@b.c") });
+    const result = await runOutboxOnce({
+      email: emailSender(transport, "a@b.c"),
+    });
     expect(result.sent).toBe(1);
     expect(transport.sent).toHaveLength(0);
   });
@@ -97,8 +108,14 @@ describe("emailSender", () => {
     const { ada, grace, eventId } = await setup();
     await createRsvp(eventId, ada);
     await createRsvp(eventId, grace);
-    await getPool().query("UPDATE rsvps SET notifications_enabled = false WHERE user_id = $1", [ada]);
-    await getPool().query("UPDATE events SET cancelled_at = now() WHERE id = $1", [eventId]);
+    await getPool().query(
+      "UPDATE rsvps SET notifications_enabled = false WHERE user_id = $1",
+      [ada],
+    );
+    await getPool().query(
+      "UPDATE events SET cancelled_at = now() WHERE id = $1",
+      [eventId],
+    );
     const transport = fakeTransport();
     await runOutboxOnce({ email: emailSender(transport, "a@b.c") });
     expect(transport.sent).toHaveLength(0);
@@ -112,17 +129,26 @@ describe("emailSender", () => {
         throw new Error("535 Authentication Failed");
       },
     };
-    const result = await runOutboxOnce({ email: emailSender(failing, "a@b.c") });
+    const result = await runOutboxOnce({
+      email: emailSender(failing, "a@b.c"),
+    });
     expect(result.retried).toBe(1);
-    const { rows } = await getPool().query("SELECT status, last_error FROM outbox");
-    expect(rows[0]).toEqual({ status: "pending", last_error: "535 Authentication Failed" });
+    const { rows } = await getPool().query(
+      "SELECT status, last_error FROM outbox",
+    );
+    expect(rows[0]).toEqual({
+      status: "pending",
+      last_error: "535 Authentication Failed",
+    });
   });
 
   it("dead-letters an unknown kind instead of guessing", async () => {
     await getPool().query(
       "INSERT INTO outbox (channel, kind, payload, attempts) VALUES ('email', 'mystery', '{}', 7)",
     );
-    const result = await runOutboxOnce({ email: emailSender(fakeTransport(), "a@b.c") });
+    const result = await runOutboxOnce({
+      email: emailSender(fakeTransport(), "a@b.c"),
+    });
     expect(result.dead).toBe(1);
   });
 });

@@ -27,13 +27,19 @@ describe("session cookie", () => {
   });
 
   it("rejects a token signed with another secret", () => {
-    const token = signSession({ uid: 42 }, "another-secret-another-secret-123456", T0);
+    const token = signSession(
+      { uid: 42 },
+      "another-secret-another-secret-123456",
+      T0,
+    );
     expect(verifySession(token, SECRET, T0)).toBeNull();
   });
 
   it("expires after 30 days", () => {
     const token = signSession({ uid: 42 }, SECRET, T0);
-    expect(verifySession(token, SECRET, T0 + 30 * DAY - 1)).toEqual({ uid: 42 });
+    expect(verifySession(token, SECRET, T0 + 30 * DAY - 1)).toEqual({
+      uid: 42,
+    });
     expect(verifySession(token, SECRET, T0 + 30 * DAY)).toBeNull();
   });
 
@@ -44,10 +50,13 @@ describe("session cookie", () => {
     ["four segments", "a.b.c.d"],
     ["not base64", "!!!.???.***"],
     ["non-numeric expiry", "eyJ1aWQiOjF9.soon.abc"],
-  ])("returns null without throwing for malformed input: %s", (_name, input) => {
-    expect(() => verifySession(input, SECRET, T0)).not.toThrow();
-    expect(verifySession(input, SECRET, T0)).toBeNull();
-  });
+  ])(
+    "returns null without throwing for malformed input: %s",
+    (_name, input) => {
+      expect(() => verifySession(input, SECRET, T0)).not.toThrow();
+      expect(verifySession(input, SECRET, T0)).toBeNull();
+    },
+  );
 
   it("returns null when the signature has the wrong length", () => {
     const [payload, expiry] = signSession({ uid: 42 }, SECRET, T0).split(".");

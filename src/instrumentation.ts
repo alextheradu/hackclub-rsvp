@@ -5,8 +5,11 @@ export async function register() {
   const { createSmtpTransport, smtpConfigured } = await import("@/lib/mail");
   const { emailSender } = await import("@/lib/email-sender");
 
-  if (!smtpConfigured()) console.warn("outbox: SMTP not configured, emails will wait in the queue");
+  if (!smtpConfigured())
+    console.warn("outbox: SMTP not configured, emails will wait in the queue");
   startOutboxWorker({
-    email: smtpConfigured() ? emailSender(createSmtpTransport(), process.env.MAIL_FROM!) : undefined,
+    email: smtpConfigured()
+      ? emailSender(createSmtpTransport(), process.env.MAIL_FROM!)
+      : undefined,
   });
 }

@@ -11,9 +11,13 @@ export function signSession(
   secret: string,
   now = Date.now(),
 ): string {
-  const payloadSegment = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const payloadSegment = Buffer.from(JSON.stringify(payload)).toString(
+    "base64url",
+  );
   const expiresAt = now + SESSION_TTL_MS;
-  const signature = sign(secret, `${payloadSegment}.${expiresAt}`).toString("base64url");
+  const signature = sign(secret, `${payloadSegment}.${expiresAt}`).toString(
+    "base64url",
+  );
   return `${payloadSegment}.${expiresAt}.${signature}`;
 }
 
@@ -47,7 +51,6 @@ export function verifySession(
     ) {
       return { uid: payload.uid };
     }
-  } catch {
-  }
+  } catch {}
   return null;
 }

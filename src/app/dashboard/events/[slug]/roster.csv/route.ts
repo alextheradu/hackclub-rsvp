@@ -5,7 +5,10 @@ import { getRoster } from "@/lib/roster";
 import { rosterCsv } from "@/lib/roster-csv";
 import { validateSlug } from "@/lib/slug";
 
-export async function GET(_request: Request, ctx: RouteContext<"/dashboard/events/[slug]/roster.csv">) {
+export async function GET(
+  _request: Request,
+  ctx: RouteContext<"/dashboard/events/[slug]/roster.csv">,
+) {
   const { slug } = await ctx.params;
   const user = await getCurrentUser();
   if (!user) redirect(`/login?returnTo=/dashboard/events/${slug}`);

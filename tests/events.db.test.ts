@@ -53,7 +53,10 @@ function eventInput(orgId: number, extra: Partial<NewEvent> = {}): NewEvent {
 describe("createOrg", () => {
   it("creates the org and makes the creator its owner", async () => {
     const userId = await makeUser();
-    const result = await createOrg(userId, { name: "Hack Club HQ", slug: "hack-club-hq" });
+    const result = await createOrg(userId, {
+      name: "Hack Club HQ",
+      slug: "hack-club-hq",
+    });
     expect(result).toMatchObject({ ok: true, id: expect.any(Number) });
     const { rows } = await getPool().query(
       "SELECT user_id, role FROM org_members WHERE org_id = $1",
@@ -85,7 +88,9 @@ describe("createOrg", () => {
   it("rejects a slug that is already taken", async () => {
     const userId = await makeUser();
     await makeOrg(userId, "taken-org");
-    expect(await createOrg(userId, { name: "Again", slug: "taken-org" })).toEqual({
+    expect(
+      await createOrg(userId, { name: "Again", slug: "taken-org" }),
+    ).toEqual({
       ok: false,
       reason: "taken",
     });
@@ -95,7 +100,9 @@ describe("createOrg", () => {
     const userId = await makeUser();
     await makeOrg(userId, "taken-org");
     await createOrg(userId, { name: "Again", slug: "taken-org" });
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM orgs");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM orgs",
+    );
     expect(rows[0].n).toBe(1);
   });
 });
@@ -105,7 +112,11 @@ describe("createEvent", () => {
     const userId = await makeUser();
     const orgId = await makeOrg(userId);
     const result = await createEvent(userId, eventInput(orgId));
-    expect(result).toEqual({ ok: true, id: expect.any(Number), slug: "my-event" });
+    expect(result).toEqual({
+      ok: true,
+      id: expect.any(Number),
+      slug: "my-event",
+    });
     const { rows } = await getPool().query(
       "SELECT kind, timezone, requires_verification, cancelled_at FROM events WHERE slug = 'my-event'",
     );
@@ -145,7 +156,9 @@ describe("createEvent", () => {
   it("rejects a blank title", async () => {
     const userId = await makeUser();
     const orgId = await makeOrg(userId);
-    expect(await createEvent(userId, eventInput(orgId, { title: "  " }))).toEqual({
+    expect(
+      await createEvent(userId, eventInput(orgId, { title: "  " })),
+    ).toEqual({
       ok: false,
       reason: "title",
     });
@@ -164,11 +177,15 @@ describe("createEvent", () => {
   it("applies the slug rules", async () => {
     const userId = await makeUser();
     const orgId = await makeOrg(userId);
-    expect(await createEvent(userId, eventInput(orgId, { slug: "ab" }))).toEqual({
+    expect(
+      await createEvent(userId, eventInput(orgId, { slug: "ab" })),
+    ).toEqual({
       ok: false,
       reason: "format",
     });
-    expect(await createEvent(userId, eventInput(orgId, { slug: "events" }))).toEqual({
+    expect(
+      await createEvent(userId, eventInput(orgId, { slug: "events" })),
+    ).toEqual({
       ok: false,
       reason: "reserved",
     });
@@ -194,7 +211,9 @@ describe("createEvent", () => {
       ok: false,
       reason: "not_member",
     });
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM events");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM events",
+    );
     expect(rows[0].n).toBe(0);
   });
 
@@ -206,7 +225,9 @@ describe("createEvent", () => {
       createEvent(userId, eventInput(orgId)),
     ]);
     expect(results.filter((r) => r.ok)).toHaveLength(1);
-    expect(results.filter((r) => !r.ok)).toEqual([{ ok: false, reason: "taken" }]);
+    expect(results.filter((r) => !r.ok)).toEqual([
+      { ok: false, reason: "taken" },
+    ]);
   });
 });
 
@@ -218,11 +239,17 @@ describe("listEventsForUser", () => {
     const graceOrg = await makeOrg(grace, "grace-club");
     await createEvent(
       ada,
-      eventInput(adaOrg, { slug: "later", startsAt: new Date("2026-12-20T10:00:00Z") }),
+      eventInput(adaOrg, {
+        slug: "later",
+        startsAt: new Date("2026-12-20T10:00:00Z"),
+      }),
     );
     await createEvent(
       ada,
-      eventInput(adaOrg, { slug: "sooner", startsAt: new Date("2026-12-02T10:00:00Z") }),
+      eventInput(adaOrg, {
+        slug: "sooner",
+        startsAt: new Date("2026-12-02T10:00:00Z"),
+      }),
     );
     await createEvent(grace, eventInput(graceOrg, { slug: "not-yours" }));
 
@@ -249,23 +276,39 @@ describe("listEventsForUser", () => {
   it("includes capacity and live RSVP counts", async () => {
     const userId = await makeUser();
     const orgId = await makeOrg(userId);
-    const created = await createEvent(userId, eventInput(orgId, { capacity: 50 }));
+    const created = await createEvent(
+      userId,
+      eventInput(orgId, { capacity: 50 }),
+    );
     if (!created.ok) throw new Error("event setup failed");
     await createEvent(userId, eventInput(orgId, { slug: "empty-one" }));
-    for (const [i, status] of ["confirmed", "confirmed", "waitlisted", "cancelled"].entries()) {
+    for (const [i, status] of [
+      "confirmed",
+      "confirmed",
+      "waitlisted",
+      "cancelled",
+    ].entries()) {
       const guest = await makeUser(`ident!guest${i}`, `guest${i}@example.com`);
-      await getPool().query("INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)", [
-        created.id,
-        guest,
-        status,
-      ]);
+      await getPool().query(
+        "INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)",
+        [created.id, guest, status],
+      );
     }
 
     const events = await listEventsForUser(userId);
     const full = events.find((e) => e.id === created.id);
     const empty = events.find((e) => e.slug === "empty-one");
-    expect(full).toMatchObject({ capacity: 50, confirmedCount: 2, waitlistedCount: 1, endsAt: null });
-    expect(empty).toMatchObject({ capacity: null, confirmedCount: 0, waitlistedCount: 0 });
+    expect(full).toMatchObject({
+      capacity: 50,
+      confirmedCount: 2,
+      waitlistedCount: 1,
+      endsAt: null,
+    });
+    expect(empty).toMatchObject({
+      capacity: null,
+      confirmedCount: 0,
+      waitlistedCount: 0,
+    });
   });
 
   it("returns an empty list for a user with no orgs", async () => {
@@ -290,23 +333,39 @@ describe("listOrgsForUser", () => {
   it("includes capacity and live RSVP counts", async () => {
     const userId = await makeUser();
     const orgId = await makeOrg(userId);
-    const created = await createEvent(userId, eventInput(orgId, { capacity: 50 }));
+    const created = await createEvent(
+      userId,
+      eventInput(orgId, { capacity: 50 }),
+    );
     if (!created.ok) throw new Error("event setup failed");
     await createEvent(userId, eventInput(orgId, { slug: "empty-one" }));
-    for (const [i, status] of ["confirmed", "confirmed", "waitlisted", "cancelled"].entries()) {
+    for (const [i, status] of [
+      "confirmed",
+      "confirmed",
+      "waitlisted",
+      "cancelled",
+    ].entries()) {
       const guest = await makeUser(`ident!guest${i}`, `guest${i}@example.com`);
-      await getPool().query("INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)", [
-        created.id,
-        guest,
-        status,
-      ]);
+      await getPool().query(
+        "INSERT INTO rsvps (event_id, user_id, status) VALUES ($1, $2, $3)",
+        [created.id, guest, status],
+      );
     }
 
     const events = await listEventsForUser(userId);
     const full = events.find((e) => e.id === created.id);
     const empty = events.find((e) => e.slug === "empty-one");
-    expect(full).toMatchObject({ capacity: 50, confirmedCount: 2, waitlistedCount: 1, endsAt: null });
-    expect(empty).toMatchObject({ capacity: null, confirmedCount: 0, waitlistedCount: 0 });
+    expect(full).toMatchObject({
+      capacity: 50,
+      confirmedCount: 2,
+      waitlistedCount: 1,
+      endsAt: null,
+    });
+    expect(empty).toMatchObject({
+      capacity: null,
+      confirmedCount: 0,
+      waitlistedCount: 0,
+    });
   });
 
   it("returns an empty list for a user with no orgs", async () => {

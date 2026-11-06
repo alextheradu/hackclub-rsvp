@@ -12,7 +12,14 @@ async function Overview({ params }: Pick<Props, "params">) {
     getEventCounts(event.id),
     getRecentRsvps(user.id, event.id, 5),
   ]);
-  return <OverviewView event={event} counts={counts} recent={recent} now={new Date()} />;
+  return (
+    <OverviewView
+      event={event}
+      counts={counts}
+      recent={recent}
+      now={new Date()}
+    />
+  );
 }
 
 export default function OverviewPage({ params }: Props) {

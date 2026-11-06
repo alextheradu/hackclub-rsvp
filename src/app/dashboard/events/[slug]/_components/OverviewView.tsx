@@ -137,7 +137,10 @@ export function OverviewView({ event, counts, recent, now }: Props) {
               Details
             </h2>
             {!event.cancelled && (
-              <Link className={styles.more} href={`/dashboard/events/${event.slug}/settings`}>
+              <Link
+                className={styles.more}
+                href={`/dashboard/events/${event.slug}/settings`}
+              >
                 Edit
               </Link>
             )}

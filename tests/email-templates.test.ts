@@ -20,9 +20,9 @@ describe("renderEmail", () => {
   });
 
   it("uses a different subject for each kind", () => {
-    const subjects = (["rsvp_confirmed", "rsvp_waitlisted", "waitlist_promoted"] as const).map(
-      (kind) => renderEmail(kind, ctx).subject,
-    );
+    const subjects = (
+      ["rsvp_confirmed", "rsvp_waitlisted", "waitlist_promoted"] as const
+    ).map((kind) => renderEmail(kind, ctx).subject);
     expect(new Set(subjects).size).toBe(3);
   });
 
@@ -33,11 +33,16 @@ describe("renderEmail", () => {
   });
 
   it("falls back to a plain greeting without a name", () => {
-    expect(renderEmail("rsvp_confirmed", { ...ctx, name: null }).text).toMatch(/^Hey,/);
+    expect(renderEmail("rsvp_confirmed", { ...ctx, name: null }).text).toMatch(
+      /^Hey,/,
+    );
   });
 
   it("escapes event text in the html part", () => {
-    const mail = renderEmail("rsvp_confirmed", { ...ctx, eventTitle: "<script>x</script>" });
+    const mail = renderEmail("rsvp_confirmed", {
+      ...ctx,
+      eventTitle: "<script>x</script>",
+    });
     expect(mail.html).not.toContain("<script>");
     expect(mail.html).toContain("&lt;script&gt;");
   });
@@ -51,6 +56,8 @@ describe("helpers", () => {
   });
 
   it("escapes all html special characters", () => {
-    expect(escapeHtml(`<a href="x">'&'</a>`)).toBe("&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");
+    expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
+      "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;",
+    );
   });
 });

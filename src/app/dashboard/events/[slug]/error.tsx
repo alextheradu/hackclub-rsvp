@@ -3,8 +3,15 @@
 import buttons from "@/components/buttons.module.css";
 import styles from "./layout.module.css";
 
-export default function EventTabError({ error, retry }: { error: unknown; retry: () => void }) {
-  const digest = error instanceof Error && "digest" in error ? String(error.digest) : null;
+export default function EventTabError({
+  error,
+  retry,
+}: {
+  error: unknown;
+  retry: () => void;
+}) {
+  const digest =
+    error instanceof Error && "digest" in error ? String(error.digest) : null;
 
   return (
     <div className={styles.tabError} role="alert">

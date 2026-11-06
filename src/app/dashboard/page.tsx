@@ -12,12 +12,25 @@ import styles from "./page.module.css";
 
 export const metadata: Metadata = { title: "Your events · hackclub.rsvp" };
 
-async function EventList({ searchParams }: { searchParams: PageProps<"/dashboard">["searchParams"] }) {
+async function EventList({
+  searchParams,
+}: {
+  searchParams: PageProps<"/dashboard">["searchParams"];
+}) {
   const user = await getCurrentUser();
   if (!user) redirect("/login?returnTo=/dashboard");
 
-  const [events, params] = await Promise.all([listEventsForUser(user.id), searchParams]);
-  return <EventListView events={events} tab={parseEventTab(params.show)} now={new Date()} />;
+  const [events, params] = await Promise.all([
+    listEventsForUser(user.id),
+    searchParams,
+  ]);
+  return (
+    <EventListView
+      events={events}
+      tab={parseEventTab(params.show)}
+      now={new Date()}
+    />
+  );
 }
 
 async function DashboardTopBar() {
@@ -25,7 +38,9 @@ async function DashboardTopBar() {
   return <TopBar user={user ?? undefined} crumbs={[{ label: "Events" }]} />;
 }
 
-export default function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
+export default function DashboardPage({
+  searchParams,
+}: PageProps<"/dashboard">) {
   return (
     <div className={styles.page}>
       <Suspense fallback={<TopBar crumbs={[{ label: "Events" }]} />}>
@@ -34,7 +49,10 @@ export default function DashboardPage({ searchParams }: PageProps<"/dashboard">)
       <main id="main" className={styles.column}>
         <div className={styles.heading}>
           <h1 className={styles.title}>Your events</h1>
-          <Link className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
+          <Link
+            className={`${buttons.btn} ${buttons.primary}`}
+            href="/dashboard/events/new"
+          >
             New event
           </Link>
         </div>

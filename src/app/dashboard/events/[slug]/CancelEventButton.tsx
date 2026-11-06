@@ -14,7 +14,10 @@ type Props = {
 
 export function CancelEventButton({ slug, notifyCount }: Props) {
   const [confirming, setConfirming] = useState(false);
-  const [state, formAction, pending] = useActionState(cancelEventAction.bind(null, slug), INITIAL);
+  const [state, formAction, pending] = useActionState(
+    cancelEventAction.bind(null, slug),
+    INITIAL,
+  );
 
   if (!confirming) {
     return (

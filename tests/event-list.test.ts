@@ -1,10 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { capacityTone, groupEvents, isLive, parseEventTab } from "@/lib/event-list";
+import {
+  capacityTone,
+  groupEvents,
+  isLive,
+  parseEventTab,
+} from "@/lib/event-list";
 
 const NOW = new Date("2026-11-03T12:00:00Z");
 const hours = (h: number) => new Date(NOW.getTime() + h * 3_600_000);
 
-function ev(name: string, startsAt: Date, endsAt: Date | null = null, cancelled = false) {
+function ev(
+  name: string,
+  startsAt: Date,
+  endsAt: Date | null = null,
+  cancelled = false,
+) {
   return { name, startsAt, endsAt, cancelled };
 }
 
@@ -35,7 +45,10 @@ describe("groupEvents", () => {
   });
 
   it("keeps an event with no end time upcoming for 12 hours after it starts", () => {
-    const groups = groupEvents([ev("recent", hours(-11)), ev("stale", hours(-13))], NOW);
+    const groups = groupEvents(
+      [ev("recent", hours(-11)), ev("stale", hours(-13))],
+      NOW,
+    );
     expect(groups.upcoming.map((e) => e.name)).toEqual(["recent"]);
     expect(groups.past.map((e) => e.name)).toEqual(["stale"]);
   });

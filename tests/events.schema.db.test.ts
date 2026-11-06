@@ -65,8 +65,12 @@ describe("events schema (migration 002)", () => {
 
   it("accepts both event kinds", async () => {
     const orgId = await createOrg();
-    await expect(insertEvent(orgId, { slug: "a-ysws", kind: "ysws" })).resolves.toBeDefined();
-    await expect(insertEvent(orgId, { slug: "an-irl", kind: "irl" })).resolves.toBeDefined();
+    await expect(
+      insertEvent(orgId, { slug: "a-ysws", kind: "ysws" }),
+    ).resolves.toBeDefined();
+    await expect(
+      insertEvent(orgId, { slug: "an-irl", kind: "irl" }),
+    ).resolves.toBeDefined();
   });
 
   it("rejects an unknown kind", async () => {

@@ -92,7 +92,9 @@
   color: var(--foreground);
   font: inherit;
   font-size: 16px;
-  transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
+  transition:
+    border-color 150ms var(--ease-out),
+    background 150ms var(--ease-out);
 }
 
 .input::placeholder {

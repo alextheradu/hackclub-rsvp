@@ -1,7 +1,7 @@
 import { q, sql } from "@/lib/db";
 
 export async function queueReminders(): Promise<number> {
-    return q().exec(sql`
+  return q().exec(sql`
         INSERT INTO outbox (channel, kind, payload, dedupe_key)
         SELECT 'email', 'event_reminder', json_build_object('rsvpId', r.id), 'event_reminder:' || r.id
         FROM rsvps r
@@ -12,5 +12,5 @@ export async function queueReminders(): Promise<number> {
           AND e.starts_at < now() + interval '24 hours'
           AND r.status_changed_at < e.starts_at - interval '24 hours'
         ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING`);
-    // i genuinely hate gh copilto so fming much AHHAHHGHGHHHAHH it keeps trying to write bs into this sql query tspmo SOB
+  // i genuinely hate gh copilto so fming much AHHAHHGHGHHHAHH it keeps trying to write bs into this sql query tspmo SOB
 }

@@ -8,7 +8,6 @@ function getZones(): string[] {
 const NO_ZONES: string[] = [];
 const subscribeNothing = () => () => {};
 
-// Empty during server rendering.
 export function useTimeZones(): string[] {
   return useSyncExternalStore(subscribeNothing, getZones, () => NO_ZONES);
 }

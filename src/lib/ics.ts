@@ -51,7 +51,9 @@ export function buildEventIcs(
   options: { url: string; host: string; now: Date },
 ): string {
   const end = event.endsAt ?? new Date(event.startsAt.getTime() + HOUR_MS);
-  const description = [event.description, options.url].filter(Boolean).join("\n\n");
+  const description = [event.description, options.url]
+    .filter(Boolean)
+    .join("\n\n");
   const location = event.locationDisplay ?? event.onlineUrl;
 
   const lines = [

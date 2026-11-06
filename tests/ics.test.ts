@@ -1,25 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { buildEventIcs, escapeIcsText, foldIcsLine, formatIcsUtc } from "@/lib/ics";
+import {
+  buildEventIcs,
+  escapeIcsText,
+  foldIcsLine,
+  formatIcsUtc,
+} from "@/lib/ics";
 
 describe("formatIcsUtc", () => {
   it("formats as YYYYMMDDTHHMMSSZ in UTC", () => {
-    expect(formatIcsUtc(new Date("2026-11-08T17:00:00Z"))).toBe("20261108T170000Z");
+    expect(formatIcsUtc(new Date("2026-11-08T17:00:00Z"))).toBe(
+      "20261108T170000Z",
+    );
   });
 
   it("zero-pads month, day, hour, minute and second", () => {
-    expect(formatIcsUtc(new Date("2026-01-02T03:04:05Z"))).toBe("20260102T030405Z");
+    expect(formatIcsUtc(new Date("2026-01-02T03:04:05Z"))).toBe(
+      "20260102T030405Z",
+    );
   });
 
   it("converts offsets to UTC", () => {
-    expect(formatIcsUtc(new Date("2026-11-08T12:00:00-05:00"))).toBe("20261108T170000Z");
+    expect(formatIcsUtc(new Date("2026-11-08T12:00:00-05:00"))).toBe(
+      "20261108T170000Z",
+    );
   });
 
   it("drops milliseconds", () => {
-    expect(formatIcsUtc(new Date("2026-11-08T17:00:00.789Z"))).toBe("20261108T170000Z");
+    expect(formatIcsUtc(new Date("2026-11-08T17:00:00.789Z"))).toBe(
+      "20261108T170000Z",
+    );
   });
 
   it("rolls over midnight correctly", () => {
-    expect(formatIcsUtc(new Date("2026-12-31T23:59:59Z"))).toBe("20261231T235959Z");
+    expect(formatIcsUtc(new Date("2026-12-31T23:59:59Z"))).toBe(
+      "20261231T235959Z",
+    );
   });
 });
 
@@ -103,7 +118,10 @@ describe("buildEventIcs", () => {
   const url = "https://hackclub.rsvp/hack-night";
   const now = new Date("2026-10-26T12:00:00Z");
   const build = (overrides = {}) =>
-    buildEventIcs({ ...event, ...overrides }, { url, host: "hackclub.rsvp", now });
+    buildEventIcs(
+      { ...event, ...overrides },
+      { url, host: "hackclub.rsvp", now },
+    );
 
   it("is a calendar with CRLF line endings and a trailing CRLF", () => {
     const ics = build();
@@ -139,11 +157,16 @@ describe("buildEventIcs", () => {
   it("puts the event link in the description and in URL", () => {
     const ics = build().replace(/\r\n /g, "");
     expect(ics).toContain("URL:https://hackclub.rsvp/hack-night\r\n");
-    expect(ics).toContain("snacks provided.\\n\\nhttps://hackclub.rsvp/hack-night\r\n");
+    expect(ics).toContain(
+      "snacks provided.\\n\\nhttps://hackclub.rsvp/hack-night\r\n",
+    );
   });
 
   it("uses the online link as the location when there is no place", () => {
-    const ics = build({ locationDisplay: null, onlineUrl: "https://meet.example.com/x" });
+    const ics = build({
+      locationDisplay: null,
+      onlineUrl: "https://meet.example.com/x",
+    });
     expect(ics).toContain("LOCATION:https://meet.example.com/x\r\n");
   });
 

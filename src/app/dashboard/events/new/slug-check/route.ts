@@ -12,5 +12,8 @@ export async function GET(request: Request) {
   if (!check.ok) status = check.reason;
   else status = (await isEventSlugTaken(slug)) ? "taken" : "ok";
 
-  return Response.json({ status }, { headers: { "Cache-Control": "private, no-store" } });
+  return Response.json(
+    { status },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }

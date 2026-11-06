@@ -10,7 +10,10 @@ type Props = PageProps<"/dashboard/events/[slug]/roster">;
 
 export const metadata: Metadata = { title: "Roster" };
 
-async function Roster({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
+async function Roster({
+  params,
+  searchParams,
+}: Pick<Props, "params" | "searchParams">) {
   const { slug } = await params;
   const filter = parseRosterFilter(await searchParams);
   const { user, event } = await getManagedEvent(slug);
@@ -21,7 +24,9 @@ async function Roster({ params, searchParams }: Pick<Props, "params" | "searchPa
   ]);
   if (!roster || !counts) notFound();
 
-  return <RosterView event={event} filter={filter} roster={roster} counts={counts} />;
+  return (
+    <RosterView event={event} filter={filter} roster={roster} counts={counts} />
+  );
 }
 
 export default function RosterPage({ params, searchParams }: Props) {

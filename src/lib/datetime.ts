@@ -21,7 +21,8 @@ function offsetMinutes(utcMs: number, timeZone: string): number {
     minute: "2-digit",
     second: "2-digit",
   }).formatToParts(new Date(utcMs));
-  const get = (type: string) => Number(parts.find((part) => part.type === type)?.value);
+  const get = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value);
   const wallAsUtc = Date.UTC(
     get("year"),
     get("month") - 1,
@@ -33,7 +34,10 @@ function offsetMinutes(utcMs: number, timeZone: string): number {
   return (wallAsUtc - utcMs) / 60_000;
 }
 
-export function parseLocalDateTime(local: string, timeZone: string): Date | null {
+export function parseLocalDateTime(
+  local: string,
+  timeZone: string,
+): Date | null {
   const match = LOCAL.exec(local);
   if (!match || !isValidTimeZone(timeZone)) return null;
   const [year, month, day, hour, minute] = match.slice(1).map(Number);
@@ -59,7 +63,6 @@ export function parseLocalDateTime(local: string, timeZone: string): Date | null
   return new Date(Math.min(...candidates));
 }
 
-// Inverse of parseLocalDateTime, e.g. "2026-11-21T09:00".
 export function toLocalDateTime(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: isValidTimeZone(timeZone) ? timeZone : "UTC",
@@ -70,6 +73,7 @@ export function toLocalDateTime(date: Date, timeZone: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).formatToParts(date);
-  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }

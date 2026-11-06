@@ -12,7 +12,10 @@ function parts(date: Date, timeZone: string) {
   try {
     formatter = new Intl.DateTimeFormat("en-US", { ...options, timeZone });
   } catch {
-    formatter = new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" });
+    formatter = new Intl.DateTimeFormat("en-US", {
+      ...options,
+      timeZone: "UTC",
+    });
   }
   const map = Object.fromEntries(
     formatter.formatToParts(date).map((part) => [part.type, part.value]),
@@ -24,11 +27,16 @@ function parts(date: Date, timeZone: string) {
   };
 }
 
-export function formatEventWhen(start: Date, end: Date | null, timeZone: string): string {
+export function formatEventWhen(
+  start: Date,
+  end: Date | null,
+  timeZone: string,
+): string {
   const from = parts(start, timeZone);
   if (!end) return `${from.day} · ${from.time} ${from.zone}`;
   const to = parts(end, timeZone);
-  if (from.day === to.day) return `${from.day} · ${from.time} – ${to.time} ${to.zone}`;
+  if (from.day === to.day)
+    return `${from.day} · ${from.time} – ${to.time} ${to.zone}`;
   return `${from.day} · ${from.time} ${from.zone} to ${to.day} · ${to.time} ${to.zone}`;
 }
 

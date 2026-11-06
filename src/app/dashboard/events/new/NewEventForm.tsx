@@ -1,9 +1,21 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import buttons from "@/components/buttons.module.css";
 import type { OrgSummary } from "@/lib/events";
-import { eventUrl, slugify, validateSlug, type EventKind, type SlugStatus } from "@/lib/slug";
+import {
+  eventUrl,
+  slugify,
+  validateSlug,
+  type EventKind,
+  type SlugStatus,
+} from "@/lib/slug";
 import {
   ErrorText,
   EventFields,
@@ -22,7 +34,10 @@ const SLUG_PROBLEM: Partial<Record<SlugStatus, string>> = {
 };
 
 function useSlugStatus(slug: string): SlugStatus | null {
-  const [remote, setRemote] = useState<{ slug: string; status: SlugStatus } | null>(null);
+  const [remote, setRemote] = useState<{
+    slug: string;
+    status: SlugStatus;
+  } | null>(null);
   const local = slug ? validateSlug(slug) : null;
 
   useEffect(() => {
@@ -30,9 +45,12 @@ function useSlugStatus(slug: string): SlugStatus | null {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/dashboard/events/new/slug-check?slug=${encodeURIComponent(slug)}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/dashboard/events/new/slug-check?slug=${encodeURIComponent(slug)}`,
+          {
+            signal: controller.signal,
+          },
+        );
         if (!response.ok) return;
         const body = (await response.json()) as { status: SlugStatus };
         setRemote({ slug, status: body.status });
@@ -51,22 +69,38 @@ function useSlugStatus(slug: string): SlugStatus | null {
   return remote?.slug === slug ? remote.status : null;
 }
 
-export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string }) {
-  const [state, formAction, pending] = useActionState(createEventAction, INITIAL);
+export function NewEventForm({
+  orgs,
+  root,
+}: {
+  orgs: OrgSummary[];
+  root: string;
+}) {
+  const [state, formAction, pending] = useActionState(
+    createEventAction,
+    INITIAL,
+  );
   const { values } = state;
   const error: FieldError = useMemo(
-    () => (state.error && state.field ? { field: state.field, message: state.error } : null),
+    () =>
+      state.error && state.field
+        ? { field: state.field, message: state.error }
+        : null,
     [state],
   );
   useFocusError(error);
 
-  const [kind, setKind] = useState<EventKind>(values.kind === "irl" ? "irl" : "ysws");
+  const [kind, setKind] = useState<EventKind>(
+    values.kind === "irl" ? "irl" : "ysws",
+  );
   const [title, setTitle] = useState(values.title ?? "");
   const [slug, setSlug] = useState(values.slug ?? "");
   const [org, setOrg] = useState(values.org ?? String(orgs[0]?.id ?? "new"));
 
   useEffect(() => {
-    const input = document.getElementById("timezone") as HTMLInputElement | null;
+    const input = document.getElementById(
+      "timezone",
+    ) as HTMLInputElement | null;
     if (input && !input.value) {
       input.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
@@ -75,13 +109,16 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
   const effectiveSlug = slug || slugify(title);
   const slugStatus = useSlugStatus(effectiveSlug);
   const submittedSlug = values.slug?.trim() || slugify(values.title ?? "");
-  const showServerSlugError = error?.field === "slug" && effectiveSlug === submittedSlug;
+  const showServerSlugError =
+    error?.field === "slug" && effectiveSlug === submittedSlug;
   const makingNewOrg = orgs.length === 0 || org === "new";
   const hiddenFields = [
     ...(kind === "ysws" ? ["locationDisplay", "onlineUrl"] : ["website"]),
-    ...(makingNewOrg ? []: ["orgName"]),
+    ...(makingNewOrg ? [] : ["orgName"]),
   ];
-  const errorAtBottom = Boolean(state.error) && (!state.field || hiddenFields.includes(state.field));
+  const errorAtBottom =
+    Boolean(state.error) &&
+    (!state.field || hiddenFields.includes(state.field));
 
   const slugField = (
     <div className={styles.field}>
@@ -97,7 +134,9 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
         maxLength={40}
         autoComplete="off"
         spellCheck={false}
-        aria-invalid={showServerSlugError || Boolean(slugStatus && SLUG_PROBLEM[slugStatus])}
+        aria-invalid={
+          showServerSlugError || Boolean(slugStatus && SLUG_PROBLEM[slugStatus])
+        }
         aria-describedby="slug-hint"
         onChange={(event) => setSlug(event.target.value.toLowerCase())}
       />
@@ -110,8 +149,12 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
           "Lowercase letters, numbers and hyphens, 3 to 40 characters."
         ) : (
           <>
-            <span className={styles.mono}>{eventUrl({ kind, slug: effectiveSlug }, root)}</span>
-            {slugStatus === "ok" && <span className={styles.available}> · Available</span>}
+            <span className={styles.mono}>
+              {eventUrl({ kind, slug: effectiveSlug }, root)}
+            </span>
+            {slugStatus === "ok" && (
+              <span className={styles.available}> · Available</span>
+            )}
           </>
         )}
       </p>
@@ -135,10 +178,17 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
           <h2 id="kind-heading" className={styles.sectionTitle}>
             Kind
           </h2>
-          <p className={styles.sectionText}>Decides what the event page asks for. You can&apos;t change it later.</p>
+          <p className={styles.sectionText}>
+            Decides what the event page asks for. You can&apos;t change it
+            later.
+          </p>
         </div>
         <div className={styles.field}>
-          <div className={styles.kinds} role="radiogroup" aria-labelledby="kind-heading">
+          <div
+            className={styles.kinds}
+            role="radiogroup"
+            aria-labelledby="kind-heading"
+          >
             <label className={styles.kind}>
               <input
                 id="kind"
@@ -149,7 +199,9 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
                 onChange={() => setKind("ysws")}
               />
               <span className={styles.kindName}>YSWS program</span>
-              <span className={styles.kindHint}>Online, with a program website</span>
+              <span className={styles.kindHint}>
+                Online, with a program website
+              </span>
             </label>
             <label className={styles.kind}>
               <input
@@ -172,7 +224,9 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
           <h2 id="details-heading" className={styles.sectionTitle}>
             Details
           </h2>
-          <p className={styles.sectionText}>Shown on the public page. You can edit these later.</p>
+          <p className={styles.sectionText}>
+            Shown on the public page. You can edit these later.
+          </p>
         </div>
         <EventFields
           kind={kind}
@@ -188,7 +242,9 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
           <h2 id="org-heading" className={styles.sectionTitle}>
             Organization
           </h2>
-          <p className={styles.sectionText}>Events belong to an organization, so you can add organizers later.</p>
+          <p className={styles.sectionText}>
+            Events belong to an organization, so you can add organizers later.
+          </p>
         </div>
         <div className={styles.fields}>
           {orgs.length > 0 && (
@@ -218,7 +274,9 @@ export function NewEventForm({ orgs, root }: { orgs: OrgSummary[]; root: string 
           {makingNewOrg && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="orgName">
-                {orgs.length > 0 ? "New organization name" : "Organization name"}{" "}
+                {orgs.length > 0
+                  ? "New organization name"
+                  : "Organization name"}{" "}
                 <span className={styles.optional}>optional</span>
               </label>
               <input

@@ -1,6 +1,10 @@
 import { q, sql } from "@/lib/db";
 import { rootDomain } from "@/lib/domain";
-import { isEmailKind, renderEmail, type EmailKind } from "@/lib/email-templates";
+import {
+  isEmailKind,
+  renderEmail,
+  type EmailKind,
+} from "@/lib/email-templates";
 import { formatEventWhen } from "@/lib/format";
 import type { MailTransport } from "@/lib/mail";
 import type { Sender } from "@/lib/outbox-worker";
@@ -16,7 +20,8 @@ const WANTED_STATUS: Record<EmailKind, readonly string[]> = {
 
 export function emailSender(transport: MailTransport, from: string): Sender {
   return async (job) => {
-    if (!isEmailKind(job.kind)) throw new Error(`unknown email kind: ${job.kind}`);
+    if (!isEmailKind(job.kind))
+      throw new Error(`unknown email kind: ${job.kind}`);
 
     const row = await q().maybe<{
       status: string;

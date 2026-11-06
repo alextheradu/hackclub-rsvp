@@ -14,7 +14,13 @@ export function invalidProps(name: string, error: FieldError) {
     : {};
 }
 
-export function ErrorText({ name, error }: { name: string; error: FieldError }) {
+export function ErrorText({
+  name,
+  error,
+}: {
+  name: string;
+  error: FieldError;
+}) {
   if (error?.field !== name) return null;
   return (
     <p id={`${name}-error`} className={styles.fieldError}>
@@ -62,7 +68,9 @@ export function EventFields({
           maxLength={120}
           required
           autoComplete="off"
-          onChange={onTitleChange && ((event) => onTitleChange(event.target.value))}
+          onChange={
+            onTitleChange && ((event) => onTitleChange(event.target.value))
+          }
           {...invalidProps("title", error)}
         />
         <ErrorText name="title" error={error} />
@@ -123,7 +131,9 @@ export function EventFields({
               <option key={zone} value={zone} />
             ))}
           </datalist>
-          <p className={styles.hint}>Start and end times are in this timezone.</p>
+          <p className={styles.hint}>
+            Start and end times are in this timezone.
+          </p>
         </div>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="capacity">

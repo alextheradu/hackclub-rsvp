@@ -37,10 +37,19 @@ export function ShareLink({ url }: { url: string }) {
         onFocus={(event) => event.currentTarget.select()}
       />
       <div className={styles.shareActions}>
-        <button type="button" className={`${buttons.btn} ${styles.copy}`} onClick={copy}>
+        <button
+          type="button"
+          className={`${buttons.btn} ${styles.copy}`}
+          onClick={copy}
+        >
           {copied ? "Copied" : "Copy link"}
         </button>
-        <a className={`${buttons.btn} ${buttons.ghost}`} href={url} target="_blank" rel="noopener noreferrer">
+        <a
+          className={`${buttons.btn} ${buttons.ghost}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Open
           <span aria-hidden="true">↗</span>
           <span className="sr-only"> (opens in a new tab)</span>

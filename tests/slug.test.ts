@@ -52,14 +52,18 @@ describe("validateSlug", () => {
 
 describe("eventUrl", () => {
   it("lives on the apex domain for every kind", () => {
-    expect(eventUrl({ kind: "ysws", slug: "my-ysws" })).toBe("https://hackclub.rsvp/my-ysws");
-    expect(eventUrl({ kind: "irl", slug: "my-meetup" })).toBe("https://hackclub.rsvp/my-meetup");
+    expect(eventUrl({ kind: "ysws", slug: "my-ysws" })).toBe(
+      "https://hackclub.rsvp/my-ysws",
+    );
+    expect(eventUrl({ kind: "irl", slug: "my-meetup" })).toBe(
+      "https://hackclub.rsvp/my-meetup",
+    );
   });
 
   it("uses a custom root domain", () => {
-    expect(eventUrl({ kind: "ysws", slug: "my-ysws" }, "dev.hackclub.rsvp")).toBe(
-      "https://dev.hackclub.rsvp/my-ysws",
-    );
+    expect(
+      eventUrl({ kind: "ysws", slug: "my-ysws" }, "dev.hackclub.rsvp"),
+    ).toBe("https://dev.hackclub.rsvp/my-ysws");
   });
 });
 
@@ -76,7 +80,10 @@ describe("slugify", () => {
     ["Café Hack Night", "cafe-hack-night"],
     ["a--b__c", "a-b-c"],
     ["---abc---", "abc"],
-    ["Summer of Making: Launch Party (NYC)", "summer-of-making-launch-party-nyc"],
+    [
+      "Summer of Making: Launch Party (NYC)",
+      "summer-of-making-launch-party-nyc",
+    ],
   ])("turns %j into %j", (input, expected) => {
     expect(slugify(input)).toBe(expected);
   });
@@ -88,7 +95,9 @@ describe("slugify", () => {
   });
 
   it("caps the slug at 40 characters", () => {
-    expect(slugify("a".repeat(30) + " " + "b".repeat(30))).toBe("a".repeat(30) + "-" + "b".repeat(9));
+    expect(slugify("a".repeat(30) + " " + "b".repeat(30))).toBe(
+      "a".repeat(30) + "-" + "b".repeat(9),
+    );
   });
 
   it("never leaves a trailing hyphen after cutting at 40", () => {

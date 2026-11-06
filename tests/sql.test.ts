@@ -22,7 +22,10 @@ describe("sql", () => {
   });
 
   it("handles a value at the very start and very end", () => {
-    expect(sql`${1}::int + ${2}`).toEqual({ text: "$1::int + $2", values: [1, 2] });
+    expect(sql`${1}::int + ${2}`).toEqual({
+      text: "$1::int + $2",
+      values: [1, 2],
+    });
   });
 
   it("goes past $9 without mangling numbers", () => {
@@ -52,7 +55,10 @@ describe("sql", () => {
   });
 });
 
-function fakeConn(rows: Record<string, unknown>[], rowCount: number | null = rows.length) {
+function fakeConn(
+  rows: Record<string, unknown>[],
+  rowCount: number | null = rows.length,
+) {
   const calls: QueryConfig[] = [];
   const conn: Queryable = {
     async query(config: QueryConfig) {
@@ -76,13 +82,19 @@ describe("q", () => {
   });
 
   it("maybe returns the first row or undefined", async () => {
-    expect(await q(fakeConn([{ id: 1 }, { id: 2 }]).conn).maybe(sql`SELECT`)).toEqual({ id: 1 });
+    expect(
+      await q(fakeConn([{ id: 1 }, { id: 2 }]).conn).maybe(sql`SELECT`),
+    ).toEqual({ id: 1 });
     expect(await q(fakeConn([]).conn).maybe(sql`SELECT`)).toBeUndefined();
   });
 
   it("one returns the first row and throws when there is none", async () => {
-    expect(await q(fakeConn([{ id: 1 }]).conn).one(sql`SELECT`)).toEqual({ id: 1 });
-    await expect(q(fakeConn([]).conn).one(sql`SELECT`)).rejects.toThrow("expected a row");
+    expect(await q(fakeConn([{ id: 1 }]).conn).one(sql`SELECT`)).toEqual({
+      id: 1,
+    });
+    await expect(q(fakeConn([]).conn).one(sql`SELECT`)).rejects.toThrow(
+      "expected a row",
+    );
   });
 
   it("exec returns rowCount, treating null as 0", async () => {

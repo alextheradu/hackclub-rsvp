@@ -3,9 +3,13 @@ import { dateTile, formatEventWhen, timeAgo } from "@/lib/format";
 
 describe("formatEventWhen", () => {
   it("shows a start with its timezone abbreviation", () => {
-    expect(formatEventWhen(new Date("2026-12-01T23:30:00Z"), null, "America/New_York")).toBe(
-      "Tue, Dec 1, 2026 · 6:30 PM EST",
-    );
+    expect(
+      formatEventWhen(
+        new Date("2026-12-01T23:30:00Z"),
+        null,
+        "America/New_York",
+      ),
+    ).toBe("Tue, Dec 1, 2026 · 6:30 PM EST");
   });
 
   it("shows a same-day end as a time range", () => {
@@ -29,21 +33,23 @@ describe("formatEventWhen", () => {
   });
 
   it("uses the event's timezone, not the server's", () => {
-    expect(formatEventWhen(new Date("2026-12-01T10:00:00Z"), null, "Asia/Kolkata")).toContain(
-      "3:30 PM",
-    );
+    expect(
+      formatEventWhen(new Date("2026-12-01T10:00:00Z"), null, "Asia/Kolkata"),
+    ).toContain("3:30 PM");
   });
 
   it("falls back to UTC for an unknown timezone instead of throwing", () => {
-    expect(formatEventWhen(new Date("2026-12-01T10:00:00Z"), null, "Mars/Olympus")).toBe(
-      "Tue, Dec 1, 2026 · 10:00 AM UTC",
-    );
+    expect(
+      formatEventWhen(new Date("2026-12-01T10:00:00Z"), null, "Mars/Olympus"),
+    ).toBe("Tue, Dec 1, 2026 · 10:00 AM UTC");
   });
 });
 
 describe("dateTile", () => {
   it("splits a date into tile parts in the event's timezone", () => {
-    expect(dateTile(new Date("2026-12-01T03:30:00Z"), "America/New_York")).toEqual({
+    expect(
+      dateTile(new Date("2026-12-01T03:30:00Z"), "America/New_York"),
+    ).toEqual({
       weekday: "Mon",
       month: "Nov",
       day: "30",
@@ -54,7 +60,9 @@ describe("dateTile", () => {
   });
 
   it("falls back to UTC for an unknown timezone", () => {
-    expect(dateTile(new Date("2026-12-01T03:30:00Z"), "Not/AZone")).toMatchObject({
+    expect(
+      dateTile(new Date("2026-12-01T03:30:00Z"), "Not/AZone"),
+    ).toMatchObject({
       month: "Dec",
       day: "1",
       zone: "UTC",
@@ -74,7 +82,9 @@ describe("timeAgo", () => {
   });
 
   it("switches to a date after a week, in the given timezone", () => {
-    expect(timeAgo(new Date("2026-10-01T02:00:00Z"), now, "America/New_York")).toBe("Sep 30");
+    expect(
+      timeAgo(new Date("2026-10-01T02:00:00Z"), now, "America/New_York"),
+    ).toBe("Sep 30");
   });
 
   it("treats future dates as just now", () => {

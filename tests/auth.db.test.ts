@@ -56,7 +56,10 @@ describe("userFromSessionToken", () => {
 
   it("returns null for a token signed with another secret", async () => {
     const id = await createUser();
-    const token = signSession({ uid: id }, "another-secret-another-secret-123456");
+    const token = signSession(
+      { uid: id },
+      "another-secret-another-secret-123456",
+    );
     await expect(userFromSessionToken(token, SECRET)).resolves.toBeNull();
   });
 
@@ -64,7 +67,9 @@ describe("userFromSessionToken", () => {
     const id = await createUser();
     const token = signSession({ uid: id }, SECRET);
     await expect(userFromSessionToken(token + "x", SECRET)).resolves.toBeNull();
-    await expect(userFromSessionToken("not.a.token", SECRET)).resolves.toBeNull();
+    await expect(
+      userFromSessionToken("not.a.token", SECRET),
+    ).resolves.toBeNull();
   });
 
   it("returns null for an expired token", async () => {
@@ -82,7 +87,10 @@ describe("userFromSessionToken", () => {
   });
 
   it("stores missing optional fields as null", async () => {
-    const { id } = await upsertUser({ sub: "ident!min", email: "min@example.com" });
+    const { id } = await upsertUser({
+      sub: "ident!min",
+      email: "min@example.com",
+    });
     const token = signSession({ uid: id }, SECRET);
     await expect(userFromSessionToken(token, SECRET)).resolves.toMatchObject({
       id,

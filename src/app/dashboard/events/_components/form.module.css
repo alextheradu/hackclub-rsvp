@@ -102,7 +102,9 @@
   color: var(--foreground);
   font: inherit;
   font-size: 17px;
-  transition: border-color 150ms var(--ease-out), background 150ms var(--ease-out);
+  transition:
+    border-color 150ms var(--ease-out),
+    background 150ms var(--ease-out);
 }
 
 .input::placeholder {
@@ -215,11 +217,15 @@
 }
 
 .kind:has(input:focus-visible) {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgb(161 161 161 / 0.6);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px rgb(161 161 161 / 0.6);
 }
 
 .kind:has(input:checked:focus-visible) {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--faint);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--faint);
 }
 
 .error {

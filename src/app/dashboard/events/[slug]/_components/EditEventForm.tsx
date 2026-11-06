@@ -4,7 +4,11 @@ import { useState, startTransition, useActionState, useMemo } from "react";
 import buttons from "@/components/buttons.module.css";
 import type { EventFormValues } from "@/lib/event-form";
 import type { EventKind } from "@/lib/slug";
-import { EventFields, useFocusError, type FieldError } from "../../_components/EventFields";
+import {
+  EventFields,
+  useFocusError,
+  type FieldError,
+} from "../../_components/EventFields";
 import form from "../../_components/form.module.css";
 import { updateEventAction, type UpdateEventState } from "../actions";
 import styles from "../settings.module.css";
@@ -16,12 +20,15 @@ type Props = {
 };
 
 export function EditEventForm({ slug, kind, initial }: Props) {
-  const [state, formAction, pending] = useActionState<UpdateEventState, FormData>(
-    updateEventAction.bind(null, slug),
-    { error: null, saved: null },
-  );
+  const [state, formAction, pending] = useActionState<
+    UpdateEventState,
+    FormData
+  >(updateEventAction.bind(null, slug), { error: null, saved: null });
   const error: FieldError = useMemo(
-    () => (state.error && state.field ? { field: state.field, message: state.error } : null),
+    () =>
+      state.error && state.field
+        ? { field: state.field, message: state.error }
+        : null,
     [state],
   );
   useFocusError(error);

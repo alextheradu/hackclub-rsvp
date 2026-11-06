@@ -2,7 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import type { PublicEvent } from "@/lib/events";
 import type { RosterCounts, RosterEntry } from "@/lib/roster";
-import { rosterHref, type RosterFilter, type RosterStatus } from "@/lib/roster-filter";
+import {
+  rosterHref,
+  type RosterFilter,
+  type RosterStatus,
+} from "@/lib/roster-filter";
 import buttons from "@/components/buttons.module.css";
 import { Chip, type ChipTone } from "@/components/Chip";
 import dash from "../../../page.module.css";
@@ -27,11 +31,20 @@ const STATUS_TONE: Record<RosterStatus, ChipTone> = {
   cancelled: "neutral",
 };
 
-function formatDate(date: Date, timeZone: string, options: Intl.DateTimeFormatOptions): string {
+function formatDate(
+  date: Date,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
   try {
-    return new Intl.DateTimeFormat("en-US", { ...options, timeZone }).format(date);
+    return new Intl.DateTimeFormat("en-US", { ...options, timeZone }).format(
+      date,
+    );
   } catch {
-    return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(date);
+    return new Intl.DateTimeFormat("en-US", {
+      ...options,
+      timeZone: "UTC",
+    }).format(date);
   }
 }
 
@@ -39,7 +52,14 @@ function Avatar({ entry }: { entry: RosterEntry }) {
   return (
     <span className={styles.avatar} aria-hidden="true">
       {entry.avatarUrl ? (
-        <Image src={entry.avatarUrl} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" />
+        <Image
+          src={entry.avatarUrl}
+          alt=""
+          width={32}
+          height={32}
+          unoptimized
+          referrerPolicy="no-referrer"
+        />
       ) : (
         (entry.name ?? entry.email).trim().charAt(0).toUpperCase() || "?"
       )}
@@ -47,7 +67,13 @@ function Avatar({ entry }: { entry: RosterEntry }) {
   );
 }
 
-function RosterRow({ entry, timeZone }: { entry: RosterEntry; timeZone: string }) {
+function RosterRow({
+  entry,
+  timeZone,
+}: {
+  entry: RosterEntry;
+  timeZone: string;
+}) {
   return (
     <li className={styles.row} data-status={entry.status}>
       <Avatar entry={entry} />
@@ -69,7 +95,10 @@ function RosterRow({ entry, timeZone }: { entry: RosterEntry; timeZone: string }
         dateTime={entry.rsvpedAt.toISOString()}
         title={`RSVPed ${formatDate(entry.rsvpedAt, timeZone, { dateStyle: "medium", timeStyle: "short" })}`}
       >
-        {formatDate(entry.rsvpedAt, timeZone, { month: "short", day: "numeric" })}
+        {formatDate(entry.rsvpedAt, timeZone, {
+          month: "short",
+          day: "numeric",
+        })}
       </time>
     </li>
   );
@@ -110,7 +139,8 @@ type Props = {
 export function RosterView({ event, filter, roster, counts }: Props) {
   const base = `/dashboard/events/${event.slug}/roster`;
   const statuses: RosterStatus[] = ["confirmed", "waitlisted"];
-  if (counts.cancelled > 0 || filter.status === "cancelled") statuses.push("cancelled");
+  if (counts.cancelled > 0 || filter.status === "cancelled")
+    statuses.push("cancelled");
 
   return (
     <>
@@ -120,10 +150,18 @@ export function RosterView({ event, filter, roster, counts }: Props) {
         q={filter.q ?? ""}
         tabs={[
           { label: "All", count: counts.all },
-          ...statuses.map((status) => ({ status, label: STATUS_LABEL[status], count: counts[status] })),
+          ...statuses.map((status) => ({
+            status,
+            label: STATUS_LABEL[status],
+            count: counts[status],
+          })),
         ]}
       >
-        <a className={buttons.btn} href={`/dashboard/events/${event.slug}/roster.csv`} download>
+        <a
+          className={buttons.btn}
+          href={`/dashboard/events/${event.slug}/roster.csv`}
+          download
+        >
           Export CSV
         </a>
       </RosterSearch>
@@ -133,7 +171,9 @@ export function RosterView({ event, filter, roster, counts }: Props) {
           {filter.q ? (
             <>
               Nobody matches “{filter.q}”.{" "}
-              <Link href={rosterHref(base, { status: filter.status })}>Clear search</Link>
+              <Link href={rosterHref(base, { status: filter.status })}>
+                Clear search
+              </Link>
             </>
           ) : filter.status ? (
             EMPTY_STATUS[filter.status]
@@ -144,7 +184,11 @@ export function RosterView({ event, filter, roster, counts }: Props) {
       ) : (
         <ul className={dash.list}>
           {roster.map((entry) => (
-            <RosterRow key={entry.rsvpId} entry={entry} timeZone={event.timezone} />
+            <RosterRow
+              key={entry.rsvpId}
+              entry={entry}
+              timeZone={event.timezone}
+            />
           ))}
         </ul>
       )}

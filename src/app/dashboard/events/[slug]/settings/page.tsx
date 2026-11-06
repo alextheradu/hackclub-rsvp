@@ -16,12 +16,18 @@ function SettingsSkeleton() {
     <div className={styles.settings} aria-hidden="true">
       <div className={styles.section}>
         <div>
-          <span className={`${dash.skeleton} ${dash.skeletonLine}`} style={{ width: 80 }} />
+          <span
+            className={`${dash.skeleton} ${dash.skeletonLine}`}
+            style={{ width: 80 }}
+          />
           <span className={`${dash.skeleton} ${dash.skeletonLineShort}`} />
         </div>
         <div className={styles.skeletonFields}>
           {Array.from({ length: 5 }, (_, i) => (
-            <span key={i} className={`${dash.skeleton} ${styles.skeletonInput}`} />
+            <span
+              key={i}
+              className={`${dash.skeleton} ${styles.skeletonInput}`}
+            />
           ))}
         </div>
       </div>
@@ -42,13 +48,20 @@ async function Settings({ params }: Pick<Props, "params">) {
             Details
           </h2>
           <p className={styles.sectionText}>
-            Changes show on the public page right away. Attendees aren&apos;t emailed, except anyone moved off the waitlist.
+            Changes show on the public page right away. Attendees aren&apos;t
+            emailed, except anyone moved off the waitlist.
           </p>
         </div>
         {event.cancelled ? (
-          <p className={styles.notice}>Cancelled events can&apos;t be edited.</p>
+          <p className={styles.notice}>
+            Cancelled events can&apos;t be edited.
+          </p>
         ) : (
-          <EditEventForm slug={event.slug} kind={event.kind} initial={eventFormValues(event)} />
+          <EditEventForm
+            slug={event.slug}
+            kind={event.kind}
+            initial={eventFormValues(event)}
+          />
         )}
       </section>
 

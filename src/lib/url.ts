@@ -8,7 +8,8 @@ export function parseOptionalHttpUrl(value: string): UrlResult {
   if (trimmed.length > MAX_LENGTH) return { ok: false };
   try {
     const url = new URL(trimmed);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return { ok: false };
+    if (url.protocol !== "https:" && url.protocol !== "http:")
+      return { ok: false };
     return { ok: true, url: url.toString() };
   } catch {
     return { ok: false };

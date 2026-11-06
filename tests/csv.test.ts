@@ -47,13 +47,15 @@ describe("toCsvRow: formula injection", () => {
   );
 
   it("guards before quoting", () => {
-    expect(toCsvRow(["=HYPERLINK(\"http://x\",\"y\")"])).toBe(
+    expect(toCsvRow(['=HYPERLINK("http://x","y")'])).toBe(
       '"\'=HYPERLINK(""http://x"",""y"")"',
     );
   });
 
   it("does not touch a dash or equals sign in the middle", () => {
-    expect(toCsvRow(["a-b", "x=y", "a+b", "me@host"])).toBe("a-b,x=y,a+b,me@host");
+    expect(toCsvRow(["a-b", "x=y", "a+b", "me@host"])).toBe(
+      "a-b,x=y,a+b,me@host",
+    );
   });
 
   it("does not guard real numbers", () => {

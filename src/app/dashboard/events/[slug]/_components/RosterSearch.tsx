@@ -29,7 +29,6 @@ type Props = {
 };
 
 // Tabs live here so their links carry the typed search before the delayed search runs.
-// Without JS the search is a plain GET form.
 export function RosterSearch({ base, status, q, tabs, children }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -55,7 +54,9 @@ export function RosterSearch({ base, status, q, tabs, children }: Props) {
     if (search === sent) return;
     setSent(search);
     startTransition(() => {
-      router.replace(rosterHref(base, { status, q: search || undefined }), { scroll: false });
+      router.replace(rosterHref(base, { status, q: search || undefined }), {
+        scroll: false,
+      });
     });
   }
 

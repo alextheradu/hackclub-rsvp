@@ -3,7 +3,10 @@ import { getEventBySlug } from "@/lib/events";
 import { buildEventIcs } from "@/lib/ics";
 import { eventUrl, validateSlug } from "@/lib/slug";
 
-export async function GET(_request: Request, ctx: RouteContext<"/e/[slug]/calendar.ics">) {
+export async function GET(
+  _request: Request,
+  ctx: RouteContext<"/e/[slug]/calendar.ics">,
+) {
   const { slug } = await ctx.params;
   const event = validateSlug(slug).ok ? await getEventBySlug(slug) : null;
   if (!event) return new Response("Not found", { status: 404 });

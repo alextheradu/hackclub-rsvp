@@ -2,7 +2,13 @@ import { resolve } from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool, withTx } from "@/lib/db";
 import { MAX_ATTEMPTS } from "@/lib/outbox-backoff";
-import { claimDue, enqueue, markFailed, markSent, type OutboxChannel } from "@/lib/outbox";
+import {
+  claimDue,
+  enqueue,
+  markFailed,
+  markSent,
+  type OutboxChannel,
+} from "@/lib/outbox";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
 
@@ -21,7 +27,11 @@ afterAll(async () => {
 
 const ALL = ["email", "slack"] as const satisfies readonly OutboxChannel[];
 
-const job = { channel: "email", kind: "rsvp_confirmed", payload: { rsvpId: 1 } } as const;
+const job = {
+  channel: "email",
+  kind: "rsvp_confirmed",
+  payload: { rsvpId: 1 },
+} as const;
 
 function row(id: number) {
   return getPool()
@@ -40,8 +50,12 @@ describe("enqueue", () => {
   });
 
   it("ignores a duplicate dedupe key", async () => {
-    expect(await enqueue(getPool(), { ...job, dedupeKey: "rsvp-confirmed:1" })).toBe(true);
-    expect(await enqueue(getPool(), { ...job, dedupeKey: "rsvp-confirmed:1" })).toBe(false);
+    expect(
+      await enqueue(getPool(), { ...job, dedupeKey: "rsvp-confirmed:1" }),
+    ).toBe(true);
+    expect(
+      await enqueue(getPool(), { ...job, dedupeKey: "rsvp-confirmed:1" }),
+    ).toBe(false);
     const { rows } = await getPool().query("SELECT 1 FROM outbox");
     expect(rows).toHaveLength(1);
   });
@@ -76,7 +90,10 @@ describe("claimDue", () => {
   });
 
   it("skips jobs scheduled for later", async () => {
-    await enqueue(getPool(), { ...job, runAfter: new Date(Date.now() + 60_000) });
+    await enqueue(getPool(), {
+      ...job,
+      runAfter: new Date(Date.now() + 60_000),
+    });
     expect(await claimDue(10, ALL)).toHaveLength(0);
   });
 
@@ -97,8 +114,13 @@ describe("claimDue", () => {
   });
 
   it("never hands the same job to two concurrent workers", async () => {
-    for (let i = 0; i < 6; i++) await enqueue(getPool(), { ...job, payload: { n: i } });
-    const batches = await Promise.all([claimDue(6, ALL), claimDue(6, ALL), claimDue(6, ALL)]);
+    for (let i = 0; i < 6; i++)
+      await enqueue(getPool(), { ...job, payload: { n: i } });
+    const batches = await Promise.all([
+      claimDue(6, ALL),
+      claimDue(6, ALL),
+      claimDue(6, ALL),
+    ]);
     const ids = batches.flat().map((j) => j.id);
     expect(ids).toHaveLength(6);
     expect(new Set(ids).size).toBe(6);
@@ -131,7 +153,9 @@ describe("markSent / markFailed", () => {
   it("dead-letters a job once attempts run out", async () => {
     await enqueue(getPool(), job);
     const [claimed] = await claimDue(1, ALL);
-    expect(await markFailed({ id: claimed.id, attempts: MAX_ATTEMPTS }, "boom")).toBe("dead");
+    expect(
+      await markFailed({ id: claimed.id, attempts: MAX_ATTEMPTS }, "boom"),
+    ).toBe("dead");
     const stored = await row(claimed.id);
     expect(stored.status).toBe("failed");
     expect(stored.last_error).toBe("boom");

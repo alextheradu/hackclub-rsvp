@@ -21,13 +21,18 @@ async function NewEventContent() {
     <>
       <TopBar
         user={user}
-        crumbs={[{ label: "Events", href: "/dashboard" }, { label: "New event" }]}
+        crumbs={[
+          { label: "Events", href: "/dashboard" },
+          { label: "New event" },
+        ]}
       />
       <main id="main" className={styles.column}>
         <div className={styles.heading}>
           <div>
             <h1 className={styles.title}>New event</h1>
-            <p className={styles.sub}>Pick a kind, name it, and share the link.</p>
+            <p className={styles.sub}>
+              Pick a kind, name it, and share the link.
+            </p>
           </div>
         </div>
         <NewEventForm orgs={orgs} root={rootDomain()} />

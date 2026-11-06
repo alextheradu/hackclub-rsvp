@@ -13,7 +13,10 @@ export type EmailContext = {
   url: string;
 };
 
-const COPY: Record<EmailKind, { subject: (title: string) => string; body: string }> = {
+const COPY: Record<
+  EmailKind,
+  { subject: (title: string) => string; body: string }
+> = {
   rsvp_confirmed: {
     subject: (title) => `You're going to ${title}`,
     body: "You're on the list. See you there!",
@@ -52,7 +55,8 @@ export function escapeHtml(text: string): string {
 export function renderEmail(kind: EmailKind, ctx: EmailContext) {
   const copy = COPY[kind];
   const greeting = ctx.name ? `Hey ${ctx.name},` : "Hey,";
-  const cancel = "Can't make it? Cancel from the event page so someone else can have your spot.";
+  const cancel =
+    "Can't make it? Cancel from the event page so someone else can have your spot.";
   const showCancel = kind !== "rsvp_waitlisted" && kind !== "event_cancelled";
 
   const text = [

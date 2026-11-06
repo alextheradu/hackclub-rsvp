@@ -20,8 +20,18 @@ export function TopBar({ user, crumbs = [] }: Props) {
       </a>
       <div className={styles.inner}>
         <div className={styles.left}>
-          <Link className={styles.logo} href="/dashboard" aria-label="hackclub.rsvp, your events">
-            <Image src="/icon-rounded.svg" alt="" width={24} height={24} unoptimized />
+          <Link
+            className={styles.logo}
+            href="/dashboard"
+            aria-label="hackclub.rsvp, your events"
+          >
+            <Image
+              src="/icon-rounded.svg"
+              alt=""
+              width={24}
+              height={24}
+              unoptimized
+            />
             <span className={styles.wordmark}>
               hackclub<span>.rsvp</span>
             </span>
@@ -33,11 +43,16 @@ export function TopBar({ user, crumbs = [] }: Props) {
                 {crumbs.map((crumb, index) => {
                   const last = index === crumbs.length - 1;
                   return (
-                    <li key={`${index}-${crumb.label}`} className={last ? styles.current : undefined}>
+                    <li
+                      key={`${index}-${crumb.label}`}
+                      className={last ? styles.current : undefined}
+                    >
                       {crumb.href && !last ? (
                         <Link href={crumb.href}>{crumb.label}</Link>
                       ) : (
-                        <span aria-current={last ? "page" : undefined}>{crumb.label}</span>
+                        <span aria-current={last ? "page" : undefined}>
+                          {crumb.label}
+                        </span>
                       )}
                     </li>
                   );
@@ -70,7 +85,9 @@ export function TopBar({ user, crumbs = [] }: Props) {
             </button>
             <div id="account-menu" popover="auto" className={styles.menu}>
               <div className={styles.menuHead}>
-                {user.name && <span className={styles.menuName}>{user.name}</span>}
+                {user.name && (
+                  <span className={styles.menuName}>{user.name}</span>
+                )}
                 <span className={styles.menuEmail}>{user.email}</span>
               </div>
               <Link className={styles.menuItem} href="/dashboard">

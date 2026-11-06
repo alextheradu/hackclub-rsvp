@@ -18,7 +18,9 @@ type Props = {
 };
 
 export function Segmented({ label, options, value }: Props) {
-  const [clicked, setClicked] = useState<{ from: string; to: string } | null>(null);
+  const [clicked, setClicked] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const active = clicked && clicked.from === value ? clicked.to : value;
   const trackRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLSpanElement>(null);
@@ -29,7 +31,9 @@ export function Segmented({ label, options, value }: Props) {
     if (!track || !pill) return;
 
     const place = () => {
-      const item = track.querySelector<HTMLElement>(`[data-value="${CSS.escape(active)}"]`);
+      const item = track.querySelector<HTMLElement>(
+        `[data-value="${CSS.escape(active)}"]`,
+      );
       if (!item) return;
       const top = item.offsetTop;
       const left = item.offsetLeft;
@@ -60,7 +64,9 @@ export function Segmented({ label, options, value }: Props) {
             onClick={() => setClicked({ from: value, to: option.value })}
           >
             {option.label}
-            {option.count !== undefined && <span className={styles.count}>{option.count}</span>}
+            {option.count !== undefined && (
+              <span className={styles.count}>{option.count}</span>
+            )}
           </Link>
         ))}
       </div>

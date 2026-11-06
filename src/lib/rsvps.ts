@@ -6,7 +6,10 @@ export type CreateRsvpResult =
   | { id: number; status: "confirmed" | "waitlisted" }
   | { error: "closed" | "cancelled" | "own_event" | "not_eligible" };
 
-export async function createRsvp(eventId: number, userId: number): Promise<CreateRsvpResult> {
+export async function createRsvp(
+  eventId: number,
+  userId: number,
+): Promise<CreateRsvpResult> {
   return withTx(async (client) => {
     const db = q(client);
     const event = await db.maybe<{
@@ -23,7 +26,10 @@ export async function createRsvp(eventId: number, userId: number): Promise<Creat
     if (event.cancelled_at) return { error: "cancelled" };
     if (event.ended) return { error: "closed" };
 
-    const existing = await db.maybe<{ id: string; status: "confirmed" | "waitlisted" }>(sql`
+    const existing = await db.maybe<{
+      id: string;
+      status: "confirmed" | "waitlisted";
+    }>(sql`
       SELECT id, status FROM rsvps
       WHERE event_id = ${eventId} AND user_id = ${userId} AND status <> 'cancelled'`);
     if (existing) return { id: Number(existing.id), status: existing.status };
@@ -50,12 +56,20 @@ export async function createRsvp(eventId: number, userId: number): Promise<Creat
       RETURNING id`);
     const id = Number(inserted.id);
     const kind = status === "confirmed" ? "rsvp_confirmed" : "rsvp_waitlisted";
-    await enqueue(client, { channel: "email", kind, payload: { rsvpId: id }, dedupeKey: `${kind}:${id}` });
+    await enqueue(client, {
+      channel: "email",
+      kind,
+      payload: { rsvpId: id },
+      dedupeKey: `${kind}:${id}`,
+    });
     return { id, status };
   });
 }
 
-export async function cancelRsvp(eventId: number, userId: number): Promise<{ promoted: number[] }> {
+export async function cancelRsvp(
+  eventId: number,
+  userId: number,
+): Promise<{ promoted: number[] }> {
   return withTx(async (client) => {
     const db = q(client);
     const event = await db.maybe<{ capacity: number | null }>(sql`
@@ -113,7 +127,10 @@ export type RsvpSummary = {
   myStatus: "confirmed" | "waitlisted" | null;
 };
 
-export async function getRsvpSummary(eventId: number, userId: number | null): Promise<RsvpSummary> {
+export async function getRsvpSummary(
+  eventId: number,
+  userId: number | null,
+): Promise<RsvpSummary> {
   const db = q();
   const counts = await db.one<{ confirmed: number; waitlisted: number }>(sql`
     SELECT count(*) FILTER (WHERE status = 'confirmed')::int AS confirmed,

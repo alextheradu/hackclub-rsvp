@@ -25,18 +25,30 @@ export async function generateMetadata({
   const event = await loadEvent(slug);
   if (!event) return { title: "Event not found" };
   const when = formatEventWhen(event.startsAt, event.endsAt, event.timezone);
-  const description = event.description?.slice(0, 200) || `${event.orgName} · ${when}`;
+  const description =
+    event.description?.slice(0, 200) || `${event.orgName} · ${when}`;
   return {
     title: `${event.title} · ${rootDomain()}`,
     description,
     alternates: { canonical: eventUrl(event, rootDomain()) },
-    openGraph: { title: event.title, description, url: eventUrl(event, rootDomain()), type: "website" },
+    openGraph: {
+      title: event.title,
+      description,
+      url: eventUrl(event, rootDomain()),
+      type: "website",
+    },
   };
 }
 
 type LoadedEvent = NonNullable<Awaited<ReturnType<typeof loadEvent>>>;
 
-async function RsvpSection({ event, slug }: { event: LoadedEvent; slug: string }) {
+async function RsvpSection({
+  event,
+  slug,
+}: {
+  event: LoadedEvent;
+  slug: string;
+}) {
   const user = await getCurrentUser();
   const summary = await getRsvpSummary(event.id, user?.id ?? null);
   const state = rsvpButtonState({
@@ -66,7 +78,11 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
   if (!event) notFound();
 
   const isIrl = event.kind === "irl";
-  const [date, time] = formatEventWhen(event.startsAt, event.endsAt, event.timezone).split(" · ");
+  const [date, time] = formatEventWhen(
+    event.startsAt,
+    event.endsAt,
+    event.timezone,
+  ).split(" · ");
 
   return (
     <main className={styles.page}>
@@ -86,7 +102,10 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
         <div className={styles.when}>
           <p className={styles.date}>{date}</p>
           {time && <p className={styles.time}>{time}</p>}
-          <a className={styles.calendar} href={`${eventUrl(event, rootDomain())}/calendar.ics`}>
+          <a
+            className={styles.calendar}
+            href={`${eventUrl(event, rootDomain())}/calendar.ics`}
+          >
             Add to calendar
           </a>
         </div>
@@ -95,19 +114,29 @@ export default async function EventPage({ params }: PageProps<"/e/[slug]">) {
           <div className={styles.details}>
             {event.locationDisplay && <p>{event.locationDisplay}</p>}
             {event.onlineUrl && (
-              <a href={event.onlineUrl} rel="noopener noreferrer nofollow" target="_blank">
+              <a
+                href={event.onlineUrl}
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+              >
                 {new URL(event.onlineUrl).host}
               </a>
             )}
             {event.website && (
-              <a href={event.website} rel="noopener noreferrer nofollow" target="_blank">
+              <a
+                href={event.website}
+                rel="noopener noreferrer nofollow"
+                target="_blank"
+              >
                 {new URL(event.website).host}
               </a>
             )}
           </div>
         )}
 
-        {event.description && <p className={styles.description}>{event.description}</p>}
+        {event.description && (
+          <p className={styles.description}>{event.description}</p>
+        )}
 
         {!event.cancelled && (
           <Suspense fallback={<div className={styles.action} />}>

@@ -1,14 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { likePattern, parseRosterFilter, rosterHref } from "@/lib/roster-filter";
+import {
+  likePattern,
+  parseRosterFilter,
+  rosterHref,
+} from "@/lib/roster-filter";
 
 describe("parseRosterFilter", () => {
   it("returns an empty filter for no params", () => {
     expect(parseRosterFilter({})).toEqual({});
   });
 
-  it.each(["confirmed", "waitlisted", "cancelled"])("accepts status %j", (status) => {
-    expect(parseRosterFilter({ status })).toEqual({ status });
-  });
+  it.each(["confirmed", "waitlisted", "cancelled"])(
+    "accepts status %j",
+    (status) => {
+      expect(parseRosterFilter({ status })).toEqual({ status });
+    },
+  );
 
   it("drops an unknown status", () => {
     expect(parseRosterFilter({ status: "checked_in" })).toEqual({});
@@ -27,7 +34,12 @@ describe("parseRosterFilter", () => {
   });
 
   it("uses the first value when a param is repeated", () => {
-    expect(parseRosterFilter({ status: ["waitlisted", "confirmed"], q: ["ada", "bob"] })).toEqual({
+    expect(
+      parseRosterFilter({
+        status: ["waitlisted", "confirmed"],
+        q: ["ada", "bob"],
+      }),
+    ).toEqual({
       status: "waitlisted",
       q: "ada",
     });
@@ -56,7 +68,9 @@ describe("rosterHref", () => {
   });
 
   it("keeps status and search", () => {
-    expect(rosterHref(base, { status: "waitlisted", q: "ada" })).toBe(`${base}?status=waitlisted&q=ada`);
+    expect(rosterHref(base, { status: "waitlisted", q: "ada" })).toBe(
+      `${base}?status=waitlisted&q=ada`,
+    );
   });
 
   it("encodes the search", () => {

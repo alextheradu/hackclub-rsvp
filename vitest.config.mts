@@ -3,8 +3,7 @@ import { defineConfig } from "vitest/config";
 
 try {
   process.loadEnvFile(".env.test");
-} catch {
-}
+} catch {}
 
 export default defineConfig({
   resolve: {

@@ -57,7 +57,12 @@ describe("eventFormValues", () => {
   });
 
   it("leaves optional fields empty", () => {
-    const values = eventFormValues({ ...event, endsAt: null, capacity: null, description: null });
+    const values = eventFormValues({
+      ...event,
+      endsAt: null,
+      capacity: null,
+      description: null,
+    });
     expect(values.endsLocal).toBe("");
     expect(values.capacity).toBe("");
     expect(values.description).toBe("");
@@ -84,8 +89,15 @@ describe("eventFormValues", () => {
 
 describe("parseEventChanges", () => {
   it("trims and empties optional fields to null", () => {
-    const result = parseEventChanges({ ...valid, endsLocal: "", capacity: " ", locationDisplay: "  " }, "irl");
-    expect(result.ok && result.changes).toMatchObject({ endsAt: null, capacity: null, locationDisplay: null });
+    const result = parseEventChanges(
+      { ...valid, endsLocal: "", capacity: " ", locationDisplay: "  " },
+      "irl",
+    );
+    expect(result.ok && result.changes).toMatchObject({
+      endsAt: null,
+      capacity: null,
+      locationDisplay: null,
+    });
   });
 
   it("requires a title", () => {
@@ -97,7 +109,9 @@ describe("parseEventChanges", () => {
   });
 
   it("rejects an end before the start", () => {
-    expect(error({ ...valid, endsLocal: "2026-11-21T08:00" })).toBe("The event has to end after it starts.");
+    expect(error({ ...valid, endsLocal: "2026-11-21T08:00" })).toBe(
+      "The event has to end after it starts.",
+    );
   });
 
   it("rejects a bad capacity", () => {
@@ -107,26 +121,46 @@ describe("parseEventChanges", () => {
   });
 
   it("rejects non-http links", () => {
-    expect(error({ ...valid, onlineUrl: "javascript:alert(1)" })).toMatch(/http/);
+    expect(error({ ...valid, onlineUrl: "javascript:alert(1)" })).toMatch(
+      /http/,
+    );
   });
 
   it("keeps only the fields that apply to the event's kind", () => {
-    const values = { ...valid, website: "https://example.com", onlineUrl: "https://meet.example.com" };
+    const values = {
+      ...valid,
+      website: "https://example.com",
+      onlineUrl: "https://meet.example.com",
+    };
     const irl = parseEventChanges(values, "irl");
     const ysws = parseEventChanges(values, "ysws");
-    expect(irl.ok && irl.changes).toMatchObject({ website: null, onlineUrl: "https://meet.example.com/" });
-    expect(ysws.ok && ysws.changes).toMatchObject({ website: "https://example.com/", onlineUrl: null, locationDisplay: null });
+    expect(irl.ok && irl.changes).toMatchObject({
+      website: null,
+      onlineUrl: "https://meet.example.com/",
+    });
+    expect(ysws.ok && ysws.changes).toMatchObject({
+      website: "https://example.com/",
+      onlineUrl: null,
+      locationDisplay: null,
+    });
   });
 
   it("reads times in the chosen timezone", () => {
-    const result = parseEventChanges({ ...valid, timezone: "Europe/London", endsLocal: "" }, "irl");
-    expect(result.ok && result.changes.startsAt).toEqual(new Date("2026-11-21T09:00:00Z"));
+    const result = parseEventChanges(
+      { ...valid, timezone: "Europe/London", endsLocal: "" },
+      "irl",
+    );
+    expect(result.ok && result.changes.startsAt).toEqual(
+      new Date("2026-11-21T09:00:00Z"),
+    );
   });
 
   it("names the field that failed", () => {
     expect(field({ ...valid, title: "" })).toBe("title");
     expect(field({ ...valid, startsLocal: "nope" })).toBe("startsLocal");
-    expect(field({ ...valid, endsLocal: "2026-11-20T09:00" })).toBe("endsLocal");
+    expect(field({ ...valid, endsLocal: "2026-11-20T09:00" })).toBe(
+      "endsLocal",
+    );
     expect(field({ ...valid, capacity: "0" })).toBe("capacity");
     expect(field({ ...valid, website: "ftp://x" })).toBe("website");
     expect(field({ ...valid, onlineUrl: "ftp://x" })).toBe("onlineUrl");

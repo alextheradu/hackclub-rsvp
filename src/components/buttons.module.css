@@ -39,7 +39,9 @@
 
 .btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgb(161 161 161 / 0.6);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px rgb(161 161 161 / 0.6);
 }
 
 .btn:disabled {
@@ -51,7 +53,9 @@
   position: relative;
   overflow: hidden;
   border-color: var(--accent);
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 50%), var(--accent);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 50%),
+    var(--accent);
   box-shadow: 0 3px 0 #9e1d30;
   color: #fff;
 }
@@ -63,11 +67,13 @@
   border-radius: inherit;
   background: rgb(0 0 0 / 0.26);
   -webkit-mask:
-    radial-gradient(circle at center, #000 1.1px, transparent 1.6px) 0 0 / 6px 6px,
+    radial-gradient(circle at center, #000 1.1px, transparent 1.6px) 0 0 / 6px
+      6px,
     linear-gradient(135deg, transparent 45%, #000 100%);
   -webkit-mask-composite: source-in;
   mask:
-    radial-gradient(circle at center, #000 1.1px, transparent 1.6px) 0 0 / 6px 6px,
+    radial-gradient(circle at center, #000 1.1px, transparent 1.6px) 0 0 / 6px
+      6px,
     linear-gradient(135deg, transparent 45%, #000 100%);
   mask-composite: intersect;
   pointer-events: none;
@@ -76,7 +82,9 @@
 @media (hover: hover) {
   .primary:hover:not(:disabled) {
     border-color: var(--accent-hover);
-    background: linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 50%), var(--accent-hover);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.16), transparent 50%),
+      var(--accent-hover);
     box-shadow: 0 5px 0 #9e1d30;
   }
 }
@@ -113,7 +121,9 @@
 }
 
 .ghost:focus-visible {
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgb(161 161 161 / 0.6);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px rgb(161 161 161 / 0.6);
 }
 
 .danger {

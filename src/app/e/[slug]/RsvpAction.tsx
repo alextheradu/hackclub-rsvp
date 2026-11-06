@@ -22,7 +22,15 @@ const NOTES: Partial<Record<RsvpButtonState, string>> = {
   closed: "RSVPs are closed.",
 };
 
-function SubmitButton({ idle, pending, variant }: { idle: string; pending: string; variant: "primary" | "ghost" }) {
+function SubmitButton({
+  idle,
+  pending,
+  variant,
+}: {
+  idle: string;
+  pending: string;
+  variant: "primary" | "ghost";
+}) {
   const status = useFormStatus();
 
   return (
@@ -36,14 +44,21 @@ function SubmitButton({ idle, pending, variant }: { idle: string; pending: strin
   );
 }
 
-export function RsvpAction({ slug, state, capacity, confirmedCount, waitlistedCount }: Props) {
+export function RsvpAction({
+  slug,
+  state,
+  capacity,
+  confirmedCount,
+  waitlistedCount,
+}: Props) {
   const [form, formAction] = useActionState(rsvpAction.bind(null, slug), {
     message: null,
   } as RsvpFormState);
 
   if (state === "cancelled") return null;
 
-  const spotsLeft = capacity === null ? null : Math.max(capacity - confirmedCount, 0);
+  const spotsLeft =
+    capacity === null ? null : Math.max(capacity - confirmedCount, 0);
 
   return (
     <div className={styles.action}>

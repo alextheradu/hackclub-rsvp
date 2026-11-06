@@ -50,7 +50,8 @@ export function sql(strings: TemplateStringsArray, ...values: unknown[]): Sql {
 
 export function q(conn: Queryable = getPool()) {
   return {
-    many: async <T>(query: Sql): Promise<T[]> => (await conn.query(query)).rows as T[],
+    many: async <T>(query: Sql): Promise<T[]> =>
+      (await conn.query(query)).rows as T[],
     maybe: async <T>(query: Sql): Promise<T | undefined> =>
       (await conn.query(query)).rows[0] as T | undefined,
     one: async <T>(query: Sql): Promise<T> => {
@@ -58,7 +59,7 @@ export function q(conn: Queryable = getPool()) {
       if (row === undefined) throw new Error("expected a row, got none");
       return row as T;
     },
-    // rowCount: rows affected, or rows returned for a SELECT.
-    exec: async (query: Sql): Promise<number> => (await conn.query(query)).rowCount ?? 0,
+    exec: async (query: Sql): Promise<number> =>
+      (await conn.query(query)).rowCount ?? 0,
   };
 }

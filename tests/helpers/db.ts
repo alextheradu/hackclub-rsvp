@@ -4,7 +4,9 @@ export function assertTestDatabase(url: string | undefined): void {
   if (!url) throw new Error("TEST_DATABASE_URL is not set");
   const name = new URL(url).pathname.replace(/^\//, "");
   if (!name.endsWith("_test")) {
-    throw new Error(`refusing to touch database "${name}": its name must end in _test`);
+    throw new Error(
+      `refusing to touch database "${name}": its name must end in _test`,
+    );
   }
 }
 
@@ -27,6 +29,8 @@ export async function resetDb(): Promise<void> {
     "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'schema_migrations'",
   );
   if (rows.length === 0) return;
-  const names = rows.map((r) => `"${r.tablename.replace(/"/g, '""')}"`).join(", ");
+  const names = rows
+    .map((r) => `"${r.tablename.replace(/"/g, '""')}"`)
+    .join(", ");
   await getPool().query(`TRUNCATE ${names} RESTART IDENTITY CASCADE`);
 }

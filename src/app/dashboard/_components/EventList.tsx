@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { capacityTone, groupEvents, isLive, type EventTab } from "@/lib/event-list";
+import {
+  capacityTone,
+  groupEvents,
+  isLive,
+  type EventTab,
+} from "@/lib/event-list";
 import type { EventSummary } from "@/lib/events";
 import { dateTile } from "@/lib/format";
 import buttons from "@/components/buttons.module.css";
@@ -29,7 +34,9 @@ function Capacity({ event, tab }: { event: EventSummary; tab: EventTab }) {
     <div className={styles.capacity}>
       <span className={styles.count}>
         <span className={styles.countNum}>{going}</span>
-        {capacity !== null && <span className={styles.countMax}>/{capacity}</span>}
+        {capacity !== null && (
+          <span className={styles.countMax}>/{capacity}</span>
+        )}
         <span className={styles.countLabel}> {label}</span>
       </span>
       {capacity !== null && (
@@ -52,7 +59,15 @@ function Capacity({ event, tab }: { event: EventSummary; tab: EventTab }) {
   );
 }
 
-function EventRow({ event, tab, now }: { event: EventSummary; tab: EventTab; now: Date }) {
+function EventRow({
+  event,
+  tab,
+  now,
+}: {
+  event: EventSummary;
+  tab: EventTab;
+  now: Date;
+}) {
   const when = dateTile(event.startsAt, event.timezone);
   const showYear = when.year !== String(now.getUTCFullYear());
   const live = isLive(event, now);
@@ -78,7 +93,8 @@ function EventRow({ event, tab, now }: { event: EventSummary; tab: EventTab; now
               {when.month} {when.day},{" "}
             </span>
             <span>
-              {when.weekday} {showYear && `${when.year} `}· {when.time} {when.zone}
+              {when.weekday} {showYear && `${when.year} `}· {when.time}{" "}
+              {when.zone}
             </span>
             <span className={styles.metaWhat}>
               {event.kind === "irl" ? "In person" : "YSWS"}
@@ -96,7 +112,15 @@ function EventRow({ event, tab, now }: { event: EventSummary; tab: EventTab; now
   );
 }
 
-export function EventListView({ events, tab, now }: { events: EventSummary[]; tab: EventTab; now: Date }) {
+export function EventListView({
+  events,
+  tab,
+  now,
+}: {
+  events: EventSummary[];
+  tab: EventTab;
+  now: Date;
+}) {
   const groups = groupEvents(events, now);
   const shown = groups[tab];
 
@@ -104,8 +128,14 @@ export function EventListView({ events, tab, now }: { events: EventSummary[]; ta
     return (
       <div className={styles.empty}>
         <p className={styles.emptyTitle}>No events yet</p>
-        <p>Create an event, share its link, and RSVPs show up here as they come in.</p>
-        <Link className={`${buttons.btn} ${buttons.primary}`} href="/dashboard/events/new">
+        <p>
+          Create an event, share its link, and RSVPs show up here as they come
+          in.
+        </p>
+        <Link
+          className={`${buttons.btn} ${buttons.primary}`}
+          href="/dashboard/events/new"
+        >
           Create your first event
         </Link>
       </div>
@@ -153,7 +183,6 @@ export function EventListView({ events, tab, now }: { events: EventSummary[]; ta
   );
 }
 
-
 export function EventListSkeleton() {
   return (
     <div aria-busy="true" aria-label="Loading events">
@@ -166,7 +195,9 @@ export function EventListSkeleton() {
             <span className={`${styles.skeleton} ${styles.skeletonTile}`} />
             <span className={styles.rowMain}>
               <span className={`${styles.skeleton} ${styles.skeletonLine}`} />
-              <span className={`${styles.skeleton} ${styles.skeletonLineShort}`} />
+              <span
+                className={`${styles.skeleton} ${styles.skeletonLineShort}`}
+              />
             </span>
           </li>
         ))}

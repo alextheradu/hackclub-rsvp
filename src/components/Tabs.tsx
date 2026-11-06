@@ -18,12 +18,16 @@ type Props = {
 };
 
 function matches(item: TabItem, pathname: string): boolean {
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return item.exact
+    ? pathname === item.href
+    : pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 export function Tabs({ label, items }: Props) {
   const pathname = usePathname();
-  const [clicked, setClicked] = useState<{ from: string; to: string } | null>(null);
+  const [clicked, setClicked] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const current = items.find((item) => matches(item, pathname))?.href ?? null;
   const active = clicked && clicked.from === pathname ? clicked.to : current;
   const listRef = useRef<HTMLDivElement>(null);
@@ -35,14 +39,20 @@ export function Tabs({ label, items }: Props) {
     if (!list || !line) return;
 
     const place = () => {
-      const item = active ? list.querySelector<HTMLElement>(`[data-href="${CSS.escape(active)}"]`) : null;
+      const item = active
+        ? list.querySelector<HTMLElement>(`[data-href="${CSS.escape(active)}"]`)
+        : null;
       if (!item) {
         delete list.dataset.ready;
         return;
       }
       const style = getComputedStyle(item);
       const left = item.offsetLeft + parseFloat(style.paddingLeft);
-      const right = list.clientWidth - item.offsetLeft - item.offsetWidth + parseFloat(style.paddingRight);
+      const right =
+        list.clientWidth -
+        item.offsetLeft -
+        item.offsetWidth +
+        parseFloat(style.paddingRight);
       line.style.clipPath = `inset(0 ${right}px 0 ${left}px)`;
       list.dataset.ready = "true";
     };
@@ -66,7 +76,9 @@ export function Tabs({ label, items }: Props) {
             onClick={() => setClicked({ from: pathname, to: item.href })}
           >
             {item.label}
-            {item.count !== undefined && <span className={styles.count}>{item.count}</span>}
+            {item.count !== undefined && (
+              <span className={styles.count}>{item.count}</span>
+            )}
           </Link>
         ))}
         <span ref={lineRef} className={styles.line} aria-hidden="true" />

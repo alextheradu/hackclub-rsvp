@@ -32,6 +32,8 @@ describe("parseOptionalHttpUrl", () => {
   });
 
   it("rejects absurdly long urls", () => {
-    expect(parseOptionalHttpUrl("https://example.com/" + "a".repeat(3000))).toEqual({ ok: false });
+    expect(
+      parseOptionalHttpUrl("https://example.com/" + "a".repeat(3000)),
+    ).toEqual({ ok: false });
   });
 });

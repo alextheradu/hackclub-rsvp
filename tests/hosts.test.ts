@@ -7,7 +7,9 @@ describe("rewriteTarget: slug.hackclub.rsvp", () => {
   });
 
   it("keeps the rest of the path", () => {
-    expect(rewriteTarget("my-ysws.hackclub.rsvp", "/rsvp")).toBe("/e/my-ysws/rsvp");
+    expect(rewriteTarget("my-ysws.hackclub.rsvp", "/rsvp")).toBe(
+      "/e/my-ysws/rsvp",
+    );
     expect(rewriteTarget("my-ysws.hackclub.rsvp", "/calendar.ics")).toBe(
       "/e/my-ysws/calendar.ics",
     );
@@ -36,7 +38,9 @@ describe("rewriteTarget: slug.hackclub.rsvp", () => {
 
 describe("rewriteTarget: events.hackclub.rsvp", () => {
   it("maps /<slug> to the event page", () => {
-    expect(rewriteTarget("events.hackclub.rsvp", "/my-meetup")).toBe("/e/my-meetup");
+    expect(rewriteTarget("events.hackclub.rsvp", "/my-meetup")).toBe(
+      "/e/my-meetup",
+    );
   });
 
   it("keeps the rest of the path", () => {
@@ -58,7 +62,16 @@ describe("rewriteTarget: hackclub.rsvp (apex, used for Slack unfurls)", () => {
   });
 
   it("never touches the app's own routes", () => {
-    for (const path of ["/", "/login", "/logout", "/dashboard", "/dashboard/events/new", "/oauth/callback", "/e/my-ysws", "/api/slack/events"]) {
+    for (const path of [
+      "/",
+      "/login",
+      "/logout",
+      "/dashboard",
+      "/dashboard/events/new",
+      "/oauth/callback",
+      "/e/my-ysws",
+      "/api/slack/events",
+    ]) {
       expect(rewriteTarget("hackclub.rsvp", path)).toBeNull();
     }
   });
@@ -87,11 +100,15 @@ describe("rewriteTarget: custom root domain", () => {
   const root = "dev.hackclub.rsvp";
 
   it("serves /slug on the custom root", () => {
-    expect(rewriteTarget("dev.hackclub.rsvp", "/my-ysws", root)).toBe("/e/my-ysws");
+    expect(rewriteTarget("dev.hackclub.rsvp", "/my-ysws", root)).toBe(
+      "/e/my-ysws",
+    );
   });
 
   it("serves subdomains of the custom root", () => {
-    expect(rewriteTarget("my-ysws.dev.hackclub.rsvp", "/", root)).toBe("/e/my-ysws");
+    expect(rewriteTarget("my-ysws.dev.hackclub.rsvp", "/", root)).toBe(
+      "/e/my-ysws",
+    );
   });
 
   it("ignores the production domain", () => {

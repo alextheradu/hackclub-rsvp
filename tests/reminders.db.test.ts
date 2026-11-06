@@ -18,10 +18,18 @@ afterAll(async () => {
   await closePool();
 });
 
-async function setup(startsIn: string, rsvpAge = "3 days", status = "confirmed") {
+async function setup(
+  startsIn: string,
+  rsvpAge = "3 days",
+  status = "confirmed",
+) {
   const pool = getPool();
-  const user = await pool.query("INSERT INTO users (hca_id, email) VALUES ('ident!a', 'a@example.com') RETURNING id");
-  const org = await pool.query("INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id");
+  const user = await pool.query(
+    "INSERT INTO users (hca_id, email) VALUES ('ident!a', 'a@example.com') RETURNING id",
+  );
+  const org = await pool.query(
+    "INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id",
+  );
   const event = await pool.query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind)
      VALUES ($1, 'my-event', 'My Event', now() + $2::interval, 'ysws') RETURNING id`,
@@ -45,9 +53,16 @@ describe("queueReminders", () => {
   it("queues an email job pointing at the rsvp", async () => {
     const { rsvpId } = await setup("12 hours");
     await queueReminders();
-    const { rows } = await getPool().query("SELECT channel, kind, payload, status FROM outbox");
+    const { rows } = await getPool().query(
+      "SELECT channel, kind, payload, status FROM outbox",
+    );
     expect(rows).toEqual([
-      { channel: "email", kind: "event_reminder", payload: { rsvpId }, status: "pending" },
+      {
+        channel: "email",
+        kind: "event_reminder",
+        payload: { rsvpId },
+        status: "pending",
+      },
     ]);
   });
 
@@ -63,7 +78,10 @@ describe("queueReminders", () => {
 
   it("skips cancelled events", async () => {
     const { eventId } = await setup("12 hours");
-    await getPool().query("UPDATE events SET cancelled_at = now() WHERE id = $1", [eventId]);
+    await getPool().query(
+      "UPDATE events SET cancelled_at = now() WHERE id = $1",
+      [eventId],
+    );
     expect(await queueReminders()).toBe(0);
   });
 

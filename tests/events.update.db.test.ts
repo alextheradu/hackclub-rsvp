@@ -32,12 +32,14 @@ async function makeUser(handle: string): Promise<number> {
 async function setup(capacity: number | null = null) {
   const organizer = await makeUser("organizer");
   const outsider = await makeUser("outsider");
-  const org = await getPool().query("INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id");
+  const org = await getPool().query(
+    "INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id",
+  );
   const orgId = Number(org.rows[0].id);
-  await getPool().query("INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')", [
-    orgId,
-    organizer,
-  ]);
+  await getPool().query(
+    "INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')",
+    [orgId, organizer],
+  );
   const event = await getPool().query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind, capacity)
      VALUES ($1, 'my-event', 'My Event', $2, 'ysws', $3) RETURNING id`,
@@ -62,7 +64,9 @@ function changes(overrides: Partial<EventChanges> = {}): EventChanges {
 }
 
 async function eventRow(eventId: number) {
-  const { rows } = await getPool().query("SELECT * FROM events WHERE id = $1", [eventId]);
+  const { rows } = await getPool().query("SELECT * FROM events WHERE id = $1", [
+    eventId,
+  ]);
   return rows[0];
 }
 
@@ -95,7 +99,13 @@ describe("updateEvent", () => {
   it("saves every editable field for an org member", async () => {
     const { organizer, eventId } = await setup();
 
-    expect(await updateEvent(organizer, eventId, changes({ title: "  Renamed Event  " }))).toEqual({
+    expect(
+      await updateEvent(
+        organizer,
+        eventId,
+        changes({ title: "  Renamed Event  " }),
+      ),
+    ).toEqual({
       ok: true,
       promoted: 0,
     });
@@ -112,18 +122,26 @@ describe("updateEvent", () => {
 
   it("rejects someone outside the event's org and changes nothing", async () => {
     const { outsider, eventId } = await setup();
-    expect(await updateEvent(outsider, eventId, changes())).toEqual({ ok: false, reason: "not_member" });
+    expect(await updateEvent(outsider, eventId, changes())).toEqual({
+      ok: false,
+      reason: "not_member",
+    });
     expect((await eventRow(eventId)).title).toBe("My Event");
   });
 
   it("returns not_member for an event that does not exist", async () => {
     const { organizer } = await setup();
-    expect(await updateEvent(organizer, 999999, changes())).toEqual({ ok: false, reason: "not_member" });
+    expect(await updateEvent(organizer, 999999, changes())).toEqual({
+      ok: false,
+      reason: "not_member",
+    });
   });
 
   it("rejects a blank title", async () => {
     const { organizer, eventId } = await setup();
-    expect(await updateEvent(organizer, eventId, changes({ title: "   " }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ title: "   " })),
+    ).toEqual({
       ok: false,
       reason: "title",
     });
@@ -131,7 +149,9 @@ describe("updateEvent", () => {
 
   it("rejects an end time that is not after the start", async () => {
     const { organizer, eventId } = await setup();
-    expect(await updateEvent(organizer, eventId, changes({ endsAt: STARTS }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ endsAt: STARTS })),
+    ).toEqual({
       ok: false,
       reason: "dates",
     });
@@ -140,7 +160,10 @@ describe("updateEvent", () => {
   it("refuses to edit a cancelled event", async () => {
     const { organizer, eventId } = await setup();
     await cancelEvent(organizer, eventId);
-    expect(await updateEvent(organizer, eventId, changes())).toEqual({ ok: false, reason: "cancelled" });
+    expect(await updateEvent(organizer, eventId, changes())).toEqual({
+      ok: false,
+      reason: "cancelled",
+    });
     expect((await eventRow(eventId)).title).toBe("My Event");
   });
 
@@ -148,20 +171,25 @@ describe("updateEvent", () => {
     const { organizer, eventId } = await setup(3);
     const users = await rsvpUsers(eventId, 3);
 
-    expect(await updateEvent(organizer, eventId, changes({ capacity: 2 }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ capacity: 2 })),
+    ).toEqual({
       ok: false,
       reason: "capacity",
       confirmedCount: 3,
     });
     expect((await eventRow(eventId)).capacity).toBe(3);
-    for (const user of users) expect(await statusOf(eventId, user)).toBe("confirmed");
+    for (const user of users)
+      expect(await statusOf(eventId, user)).toBe("confirmed");
   });
 
   it("allows lowering capacity to exactly the confirmed count", async () => {
     const { organizer, eventId } = await setup(5);
     await rsvpUsers(eventId, 2);
 
-    expect(await updateEvent(organizer, eventId, changes({ capacity: 2 }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ capacity: 2 })),
+    ).toEqual({
       ok: true,
       promoted: 0,
     });
@@ -172,7 +200,9 @@ describe("updateEvent", () => {
     const { organizer, eventId } = await setup(1);
     const [first, second, third, fourth] = await rsvpUsers(eventId, 4);
 
-    expect(await updateEvent(organizer, eventId, changes({ capacity: 3 }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ capacity: 3 })),
+    ).toEqual({
       ok: true,
       promoted: 2,
     });
@@ -188,11 +218,14 @@ describe("updateEvent", () => {
     const { organizer, eventId } = await setup(1);
     const users = await rsvpUsers(eventId, 3);
 
-    expect(await updateEvent(organizer, eventId, changes({ capacity: null }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ capacity: null })),
+    ).toEqual({
       ok: true,
       promoted: 2,
     });
-    for (const user of users) expect(await statusOf(eventId, user)).toBe("confirmed");
+    for (const user of users)
+      expect(await statusOf(eventId, user)).toBe("confirmed");
     expect(await promotionEmails()).toBe(2);
   });
 
@@ -200,7 +233,9 @@ describe("updateEvent", () => {
     const { organizer, eventId } = await setup(1);
     const [, waiting] = await rsvpUsers(eventId, 2);
 
-    expect(await updateEvent(organizer, eventId, changes({ capacity: 1 }))).toEqual({
+    expect(
+      await updateEvent(organizer, eventId, changes({ capacity: 1 })),
+    ).toEqual({
       ok: true,
       promoted: 0,
     });

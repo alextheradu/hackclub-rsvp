@@ -19,7 +19,10 @@ afterAll(async () => {
   await closePool();
 });
 
-async function makeUser(handle: string, slackId: string | null = null): Promise<number> {
+async function makeUser(
+  handle: string,
+  slackId: string | null = null,
+): Promise<number> {
   const { rows } = await getPool().query(
     "INSERT INTO users (hca_id, email, name, slack_id) VALUES ($1, $2, $3, $4) RETURNING id",
     [`ident!${handle}`, `${handle}@example.com`, handle, slackId],
@@ -30,11 +33,13 @@ async function makeUser(handle: string, slackId: string | null = null): Promise<
 async function setup(capacity: number | null = null) {
   const organizer = await makeUser("organizer");
   const outsider = await makeUser("outsider");
-  const org = await getPool().query("INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id");
-  await getPool().query("INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')", [
-    org.rows[0].id,
-    organizer,
-  ]);
+  const org = await getPool().query(
+    "INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id",
+  );
+  await getPool().query(
+    "INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')",
+    [org.rows[0].id, organizer],
+  );
   const event = await getPool().query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind, capacity)
      VALUES ($1, 'my-event', 'My Event', now() + interval '7 days', 'ysws', $2) RETURNING id`,
@@ -81,10 +86,15 @@ describe("getRoster", () => {
     const { organizer, eventId } = await setup();
     const ada = await makeUser("ada", "U123");
     const avatar = "https://avatars.slack-edge.com/2026-01-01/ada_192.png";
-    await getPool().query("UPDATE users SET avatar_url = $1 WHERE id = $2", [avatar, ada]);
+    await getPool().query("UPDATE users SET avatar_url = $1 WHERE id = $2", [
+      avatar,
+      ada,
+    ]);
     await createRsvp(eventId, ada);
     expect((await getRoster(organizer, eventId))![0].avatarUrl).toBe(avatar);
-    expect((await getRecentRsvps(organizer, eventId))[0].avatarUrl).toBe(avatar);
+    expect((await getRecentRsvps(organizer, eventId))[0].avatarUrl).toBe(
+      avatar,
+    );
   });
 
   it("lists confirmed, then waitlisted, then cancelled, oldest first within each", async () => {
@@ -139,7 +149,9 @@ describe("getRoster filters", () => {
 
   it("filters by status", async () => {
     const { organizer, eventId } = await seed();
-    const roster = await getRoster(organizer, eventId, { status: "waitlisted" });
+    const roster = await getRoster(organizer, eventId, {
+      status: "waitlisted",
+    });
     expect(roster!.map((r) => r.name)).toEqual(["bob"]);
   });
 
@@ -151,8 +163,14 @@ describe("getRoster filters", () => {
 
   it("searches email and slack id", async () => {
     const { organizer, eventId } = await seed();
-    expect((await getRoster(organizer, eventId, { q: "bob@example" }))!.map((r) => r.name)).toEqual(["bob"]);
-    expect((await getRoster(organizer, eventId, { q: "u_ada" }))!.map((r) => r.name)).toEqual(["ada"]);
+    expect(
+      (await getRoster(organizer, eventId, { q: "bob@example" }))!.map(
+        (r) => r.name,
+      ),
+    ).toEqual(["bob"]);
+    expect(
+      (await getRoster(organizer, eventId, { q: "u_ada" }))!.map((r) => r.name),
+    ).toEqual(["ada"]);
   });
 
   it("treats % in the search as a literal character", async () => {
@@ -162,12 +180,16 @@ describe("getRoster filters", () => {
 
   it("combines status and search", async () => {
     const { organizer, eventId } = await seed();
-    expect(await getRoster(organizer, eventId, { status: "confirmed", q: "bob" })).toEqual([]);
+    expect(
+      await getRoster(organizer, eventId, { status: "confirmed", q: "bob" }),
+    ).toEqual([]);
   });
 
   it("still returns null for an outsider when filtering", async () => {
     const { outsider, eventId } = await seed();
-    expect(await getRoster(outsider, eventId, { status: "confirmed" })).toBeNull();
+    expect(
+      await getRoster(outsider, eventId, { status: "confirmed" }),
+    ).toBeNull();
   });
 });
 
@@ -219,7 +241,6 @@ describe("getRosterCounts", () => {
     expect(await getRosterCounts(outsider, eventId)).toBeNull();
   });
 });
-
 
 describe("getRecentRsvps", () => {
   it("returns live RSVPs newest first, up to the limit", async () => {

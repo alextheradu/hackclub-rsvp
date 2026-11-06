@@ -26,6 +26,7 @@ export function rsvpButtonState(input: RsvpButtonInput): RsvpButtonState {
   if (input.now > end) return "closed";
 
   if (!input.signedIn) return "signed_out";
-  const isFull = input.capacity !== null && input.confirmedCount >= input.capacity;
+  const isFull =
+    input.capacity !== null && input.confirmedCount >= input.capacity;
   return isFull ? "full" : "open";
 }

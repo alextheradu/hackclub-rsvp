@@ -84,7 +84,9 @@ describe("test database guard", () => {
     const { rows } = await getPool().query(
       "SELECT (SELECT count(*) FROM users)::int AS users, (SELECT count(*) FROM schema_migrations)::int AS migrations",
     );
-    const migrationFiles = readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).length;
+    const migrationFiles = readdirSync(MIGRATIONS).filter((f) =>
+      f.endsWith(".sql"),
+    ).length;
     expect(rows[0]).toEqual({ users: 0, migrations: migrationFiles });
   });
 

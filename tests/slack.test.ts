@@ -4,7 +4,9 @@ import { fetchSlackAvatar, isSlackAvatarUrl } from "@/lib/slack";
 const AVATAR = "https://avatars.slack-edge.com/2026-01-01/abc_192.png";
 
 function slackReplies(body: unknown, status = 200) {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status }));
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify(body), { status }));
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
 }
@@ -20,7 +22,15 @@ afterEach(() => {
 
 describe("fetchSlackAvatar", () => {
   it("asks users.info for the user with the bot token and returns image_192", async () => {
-    const fetchMock = slackReplies({ ok: true, user: { profile: { image_72: "https://avatars.slack-edge.com/72.png", image_192: AVATAR } } });
+    const fetchMock = slackReplies({
+      ok: true,
+      user: {
+        profile: {
+          image_72: "https://avatars.slack-edge.com/72.png",
+          image_192: AVATAR,
+        },
+      },
+    });
     await expect(fetchSlackAvatar("U0ADA")).resolves.toBe(AVATAR);
 
     const [url, init] = fetchMock.mock.calls[0];
@@ -55,7 +65,10 @@ describe("fetchSlackAvatar", () => {
   });
 
   it("rejects image URLs from hosts Slack doesn't use", async () => {
-    slackReplies({ ok: true, user: { profile: { image_192: "https://evil.example/a.png" } } });
+    slackReplies({
+      ok: true,
+      user: { profile: { image_192: "https://evil.example/a.png" } },
+    });
     await expect(fetchSlackAvatar("U0ADA")).resolves.toBeNull();
   });
 });
@@ -63,7 +76,9 @@ describe("fetchSlackAvatar", () => {
 describe("isSlackAvatarUrl", () => {
   it("accepts https Slack and Gravatar URLs only", () => {
     expect(isSlackAvatarUrl(AVATAR)).toBe(true);
-    expect(isSlackAvatarUrl("https://secure.gravatar.com/avatar/x.jpg")).toBe(true);
+    expect(isSlackAvatarUrl("https://secure.gravatar.com/avatar/x.jpg")).toBe(
+      true,
+    );
     expect(isSlackAvatarUrl("http://avatars.slack-edge.com/a.png")).toBe(false);
     expect(isSlackAvatarUrl("javascript:alert(1)")).toBe(false);
     expect(isSlackAvatarUrl(42)).toBe(false);

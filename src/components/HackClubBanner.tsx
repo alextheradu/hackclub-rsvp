@@ -34,7 +34,8 @@ export default function HackClubBanner() {
 
     const onPointerMove = (event: PointerEvent) => {
       const box = wrap.getBoundingClientRect();
-      const dx = (event.clientX - (box.left + box.width / 2)) / (window.innerWidth / 2);
+      const dx =
+        (event.clientX - (box.left + box.width / 2)) / (window.innerWidth / 2);
       const clamped = Math.max(-1, Math.min(1, dx));
       target.rotate = -clamped * MAX_ROTATE_DEG;
       target.skew = clamped * MAX_SKEW_DEG;
@@ -50,7 +51,12 @@ export default function HackClubBanner() {
 
   return (
     <div ref={wrapRef} className={styles.wrap}>
-      <a ref={linkRef} className={styles.link} href="https://hackclub.com" aria-label="Hack Club">
+      <a
+        ref={linkRef}
+        className={styles.link}
+        href="https://hackclub.com"
+        aria-label="Hack Club"
+      >
         <Image
           src="/hackclub-flag.svg"
           alt=""

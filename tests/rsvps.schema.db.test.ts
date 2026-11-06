@@ -23,7 +23,9 @@ async function seed() {
     `INSERT INTO users (hca_id, email) VALUES ('ident!a', 'a@example.com'), ('ident!b', 'b@example.com')
      RETURNING id`,
   );
-  const org = await pool.query("INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id");
+  const org = await pool.query(
+    "INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id",
+  );
   const event = await pool.query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind)
      VALUES ($1, 'my-event', 'My Event', now() + interval '7 days', 'ysws') RETURNING id`,
@@ -76,7 +78,9 @@ describe("rsvps schema (migration 003)", () => {
   it("accepts the three statuses and rejects anything else", async () => {
     const { ada, grace, eventId } = await seed();
     await expect(insertRsvp(eventId, ada, "confirmed")).resolves.toBeDefined();
-    await expect(insertRsvp(eventId, grace, "waitlisted")).resolves.toBeDefined();
+    await expect(
+      insertRsvp(eventId, grace, "waitlisted"),
+    ).resolves.toBeDefined();
     await getPool().query("DELETE FROM rsvps");
     await expect(insertRsvp(eventId, ada, "cancelled")).resolves.toBeDefined();
     await expect(insertRsvp(eventId, grace, "maybe")).rejects.toThrow();
@@ -85,7 +89,10 @@ describe("rsvps schema (migration 003)", () => {
   it("requires a status", async () => {
     const { ada, eventId } = await seed();
     await expect(
-      getPool().query("INSERT INTO rsvps (event_id, user_id) VALUES ($1, $2)", [eventId, ada]),
+      getPool().query("INSERT INTO rsvps (event_id, user_id) VALUES ($1, $2)", [
+        eventId,
+        ada,
+      ]),
     ).rejects.toThrow();
   });
 
@@ -101,21 +108,27 @@ describe("rsvps schema (migration 003)", () => {
     await insertRsvp(eventId, ada, "cancelled");
     await insertRsvp(eventId, ada, "cancelled");
     await expect(insertRsvp(eventId, ada, "confirmed")).resolves.toBeDefined();
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM rsvps");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM rsvps",
+    );
     expect(rows[0].n).toBe(3);
   });
 
   it("lets different people RSVP to the same event", async () => {
     const { ada, grace, eventId } = await seed();
     await insertRsvp(eventId, ada, "confirmed");
-    await expect(insertRsvp(eventId, grace, "confirmed")).resolves.toBeDefined();
+    await expect(
+      insertRsvp(eventId, grace, "confirmed"),
+    ).resolves.toBeDefined();
   });
 
   it("deletes RSVPs with their event", async () => {
     const { ada, eventId } = await seed();
     await insertRsvp(eventId, ada, "confirmed");
     await getPool().query("DELETE FROM events WHERE id = $1", [eventId]);
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM rsvps");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM rsvps",
+    );
     expect(rows[0].n).toBe(0);
   });
 
@@ -123,7 +136,9 @@ describe("rsvps schema (migration 003)", () => {
     const { ada, eventId } = await seed();
     await insertRsvp(eventId, ada, "confirmed");
     await getPool().query("DELETE FROM users WHERE id = $1", [ada]);
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM rsvps");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM rsvps",
+    );
     expect(rows[0].n).toBe(0);
   });
 

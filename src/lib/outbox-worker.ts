@@ -1,4 +1,10 @@
-import { claimDue, markFailed, markSent, type OutboxChannel, type OutboxJob } from "@/lib/outbox";
+import {
+  claimDue,
+  markFailed,
+  markSent,
+  type OutboxChannel,
+  type OutboxJob,
+} from "@/lib/outbox";
 import { queueReminders } from "@/lib/reminders";
 
 export type Sender = (job: OutboxJob) => Promise<void>;
@@ -6,8 +12,13 @@ export type Senders = Partial<Record<OutboxChannel, Sender>>;
 
 export type RunResult = { sent: number; retried: number; dead: number };
 
-export async function runOutboxOnce(senders: Senders, limit = 20): Promise<RunResult> {
-  const channels = (Object.keys(senders) as OutboxChannel[]).filter((c) => senders[c]);
+export async function runOutboxOnce(
+  senders: Senders,
+  limit = 20,
+): Promise<RunResult> {
+  const channels = (Object.keys(senders) as OutboxChannel[]).filter(
+    (c) => senders[c],
+  );
   const jobs = await claimDue(limit, channels);
   const result: RunResult = { sent: 0, retried: 0, dead: 0 };
 
@@ -25,7 +36,9 @@ export async function runOutboxOnce(senders: Senders, limit = 20): Promise<RunRe
   return result;
 }
 
-const globalForWorker = globalThis as unknown as { __outboxTimer?: NodeJS.Timeout };
+const globalForWorker = globalThis as unknown as {
+  __outboxTimer?: NodeJS.Timeout;
+};
 
 export function startOutboxWorker(senders: Senders, intervalMs = 10_000): void {
   if (globalForWorker.__outboxTimer) return;
@@ -36,7 +49,8 @@ export function startOutboxWorker(senders: Senders, intervalMs = 10_000): void {
     try {
       await queueReminders();
       const { sent, retried, dead } = await runOutboxOnce(senders);
-      if (retried || dead) console.warn(`outbox: ${sent} sent, ${retried} retrying, ${dead} dead`);
+      if (retried || dead)
+        console.warn(`outbox: ${sent} sent, ${retried} retrying, ${dead} dead`);
     } catch (error) {
       console.error("outbox: run failed", error);
     } finally {

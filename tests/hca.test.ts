@@ -25,7 +25,9 @@ afterEach(() => {
 describe("buildAuthorizeUrl", () => {
   it("includes client_id, scopes, state, redirect_uri and response_type=code", () => {
     const url = new URL(buildAuthorizeUrl("abc123"));
-    expect(url.origin + url.pathname).toBe("https://auth.hackclub.com/oauth/authorize");
+    expect(url.origin + url.pathname).toBe(
+      "https://auth.hackclub.com/oauth/authorize",
+    );
     expect(url.searchParams.get("client_id")).toBe(CLIENT_ID);
     expect(url.searchParams.get("redirect_uri")).toBe(REDIRECT);
     expect(url.searchParams.get("response_type")).toBe("code");
@@ -36,8 +38,15 @@ describe("buildAuthorizeUrl", () => {
   });
 
   it("never requests a scope outside the community-app set", () => {
-    const scope = new URL(buildAuthorizeUrl("s")).searchParams.get("scope") ?? "";
-    for (const forbidden of ["phone", "birthdate", "address", "legal_name", "basic_info"]) {
+    const scope =
+      new URL(buildAuthorizeUrl("s")).searchParams.get("scope") ?? "";
+    for (const forbidden of [
+      "phone",
+      "birthdate",
+      "address",
+      "legal_name",
+      "basic_info",
+    ]) {
       expect(scope.split(" ")).not.toContain(forbidden);
     }
   });
@@ -91,13 +100,18 @@ describe("safeReturnTo", () => {
 describe("exchangeCode", () => {
   it("posts the code to the HCA token endpoint and returns the access token", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ access_token: "idntk.abc", token_type: "Bearer" }), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify({ access_token: "idntk.abc", token_type: "Bearer" }),
+        {
+          status: 200,
+        },
+      ),
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(exchangeCode("the-code")).resolves.toEqual({ accessToken: "idntk.abc" });
+    await expect(exchangeCode("the-code")).resolves.toEqual({
+      accessToken: "idntk.abc",
+    });
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toBe("https://auth.hackclub.com/oauth/token");
@@ -113,7 +127,11 @@ describe("exchangeCode", () => {
   it("throws on a non-200 response without leaking the client secret", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(new Response(`{"error":"invalid_grant"}`, { status: 400 })),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(`{"error":"invalid_grant"}`, { status: 400 }),
+        ),
     );
     const error = await exchangeCode("bad").catch((e: Error) => e);
     expect(error).toBeInstanceOf(Error);
@@ -123,7 +141,9 @@ describe("exchangeCode", () => {
   it("throws when the response has no access_token", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
+      vi
+        .fn()
+        .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
     );
     await expect(exchangeCode("x")).rejects.toThrow();
   });
@@ -134,7 +154,9 @@ describe("fetchUserinfo", () => {
     const profile = { sub: "ident!abc", email: "a@example.com", name: "Ada" };
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify(profile), { status: 200 }));
+      .mockResolvedValue(
+        new Response(JSON.stringify(profile), { status: 200 }),
+      );
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(fetchUserinfo("idntk.abc")).resolves.toEqual(profile);
@@ -145,14 +167,21 @@ describe("fetchUserinfo", () => {
   });
 
   it("throws on 401", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 401 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("{}", { status: 401 })),
+    );
     await expect(fetchUserinfo("bad")).rejects.toThrow();
   });
 
   it("throws when the profile has no sub or email", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(new Response(JSON.stringify({ name: "x" }), { status: 200 })),
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ name: "x" }), { status: 200 }),
+        ),
     );
     await expect(fetchUserinfo("t")).rejects.toThrow();
   });

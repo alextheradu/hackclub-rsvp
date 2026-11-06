@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { parseEventChanges } from "@/lib/event-form";
-import { cancelEvent, getEventBySlug, updateEvent, type UpdateEventResult } from "@/lib/events";
+import {
+  cancelEvent,
+  getEventBySlug,
+  updateEvent,
+  type UpdateEventResult,
+} from "@/lib/events";
 import { validateSlug } from "@/lib/slug";
 
 export type CancelEventState = { error: string | null };
@@ -20,7 +25,8 @@ export async function cancelEventAction(
   if (!event) return { error: "Event not found." };
 
   const result = await cancelEvent(user.id, event.id);
-  if (result === "not_member") return { error: "You can't cancel an event you don't organize." };
+  if (result === "not_member")
+    return { error: "You can't cancel an event you don't organize." };
 
   revalidatePath(`/dashboard/events/${slug}`, "layout");
   revalidatePath("/dashboard");
@@ -34,13 +40,17 @@ export type UpdateEventState = {
   saved: string | null;
 };
 
-const UPDATE_ERROR_FIELD: Partial<Record<Extract<UpdateEventResult, { ok: false }>["reason"], string>> = {
+const UPDATE_ERROR_FIELD: Partial<
+  Record<Extract<UpdateEventResult, { ok: false }>["reason"], string>
+> = {
   title: "title",
   dates: "endsLocal",
   capacity: "capacity",
 };
 
-function updateError(result: Extract<UpdateEventResult, { ok: false }>): string {
+function updateError(
+  result: Extract<UpdateEventResult, { ok: false }>,
+): string {
   switch (result.reason) {
     case "title":
       return "Give the event a title.";
@@ -64,9 +74,15 @@ export async function updateEventAction(
   if (!user) redirect(`/login?returnTo=/dashboard/events/${slug}/settings`);
 
   const values = Object.fromEntries(
-    [...formData.entries()].filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    [...formData.entries()].filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string",
+    ),
   );
-  const fail = (error: string, field?: string): UpdateEventState => ({ error, field, saved: null });
+  const fail = (error: string, field?: string): UpdateEventState => ({
+    error,
+    field,
+    saved: null,
+  });
 
   const event = validateSlug(slug).ok ? await getEventBySlug(slug) : null;
   if (!event) return fail("Event not found.");
@@ -75,7 +91,8 @@ export async function updateEventAction(
   if (!parsed.ok) return fail(parsed.error, parsed.field);
 
   const result = await updateEvent(user.id, event.id, parsed.changes);
-  if (!result.ok) return fail(updateError(result), UPDATE_ERROR_FIELD[result.reason]);
+  if (!result.ok)
+    return fail(updateError(result), UPDATE_ERROR_FIELD[result.reason]);
 
   revalidatePath(`/dashboard/events/${slug}`, "layout");
   revalidatePath("/dashboard");

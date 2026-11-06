@@ -40,13 +40,15 @@ describe("rosterCsv", () => {
   });
 
   it("writes missing name and slack id as empty cells", () => {
-    expect(rosterCsv([entry({ name: null, slackId: null })]).split("\r\n")[1]).toBe(
-      ",ada@example.com,,confirmed,2026-10-31T12:00:00.000Z",
-    );
+    expect(
+      rosterCsv([entry({ name: null, slackId: null })]).split("\r\n")[1],
+    ).toBe(",ada@example.com,,confirmed,2026-10-31T12:00:00.000Z");
   });
 
   it("neutralises a formula in an attendee's name", () => {
-    const row = rosterCsv([entry({ name: '=HYPERLINK("http://x","y")' })]).split("\r\n")[1];
+    const row = rosterCsv([
+      entry({ name: '=HYPERLINK("http://x","y")' }),
+    ]).split("\r\n")[1];
     expect(row.startsWith(`"'=HYPERLINK`)).toBe(true);
   });
 });

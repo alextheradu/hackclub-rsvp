@@ -38,7 +38,10 @@ describe("upsertUser", () => {
   it("creates a user and reports isNew on first login", async () => {
     const result = await upsertUser(profile);
     expect(result.isNew).toBe(true);
-    const { rows } = await getPool().query("SELECT * FROM users WHERE id = $1", [result.id]);
+    const { rows } = await getPool().query(
+      "SELECT * FROM users WHERE id = $1",
+      [result.id],
+    );
     expect(rows[0]).toMatchObject({
       hca_id: "ident!abc123",
       email: "ada@example.com",
@@ -88,21 +91,37 @@ describe("upsertUser", () => {
   });
 
   it("stores missing optional claims as NULL", async () => {
-    const { id } = await upsertUser({ sub: "ident!min", email: "min@example.com" });
-    const { rows } = await getPool().query("SELECT slack_id, name, ysws_eligible FROM users WHERE id = $1", [id]);
-    expect(rows[0]).toEqual({ slack_id: null, name: null, ysws_eligible: null });
+    const { id } = await upsertUser({
+      sub: "ident!min",
+      email: "min@example.com",
+    });
+    const { rows } = await getPool().query(
+      "SELECT slack_id, name, ysws_eligible FROM users WHERE id = $1",
+      [id],
+    );
+    expect(rows[0]).toEqual({
+      slack_id: null,
+      name: null,
+      ysws_eligible: null,
+    });
   });
 
   it("stores the Slack avatar URL", async () => {
     const { id } = await upsertUser(profile, AVATAR);
-    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    const { rows } = await getPool().query(
+      "SELECT avatar_url FROM users WHERE id = $1",
+      [id],
+    );
     expect(rows[0].avatar_url).toBe(AVATAR);
   });
 
   it("keeps the old avatar when Slack is unreachable on a later login", async () => {
     const { id } = await upsertUser(profile, AVATAR);
     await upsertUser(profile, null);
-    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    const { rows } = await getPool().query(
+      "SELECT avatar_url FROM users WHERE id = $1",
+      [id],
+    );
     expect(rows[0].avatar_url).toBe(AVATAR);
   });
 
@@ -110,14 +129,20 @@ describe("upsertUser", () => {
     const { id } = await upsertUser(profile, AVATAR);
     const next = "https://avatars.slack-edge.com/2026-11-03/new_192.png";
     await upsertUser(profile, next);
-    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    const { rows } = await getPool().query(
+      "SELECT avatar_url FROM users WHERE id = $1",
+      [id],
+    );
     expect(rows[0].avatar_url).toBe(next);
   });
 
   it("clears the avatar when the Slack account is unlinked", async () => {
     const { id } = await upsertUser(profile, AVATAR);
     await upsertUser({ ...profile, slack_id: undefined }, null);
-    const { rows } = await getPool().query("SELECT avatar_url FROM users WHERE id = $1", [id]);
+    const { rows } = await getPool().query(
+      "SELECT avatar_url FROM users WHERE id = $1",
+      [id],
+    );
     expect(rows[0].avatar_url).toBeNull();
   });
 
@@ -129,9 +154,13 @@ describe("upsertUser", () => {
   });
 
   it("20 parallel first logins for one user create exactly one row", async () => {
-    const results = await Promise.all(Array.from({ length: 20 }, () => upsertUser(profile)));
+    const results = await Promise.all(
+      Array.from({ length: 20 }, () => upsertUser(profile)),
+    );
     expect(results.filter((r) => r.isNew)).toHaveLength(1);
-    const { rows } = await getPool().query("SELECT count(*)::int AS n FROM users");
+    const { rows } = await getPool().query(
+      "SELECT count(*)::int AS n FROM users",
+    );
     expect(rows[0].n).toBe(1);
   });
 });

@@ -21,7 +21,10 @@ export type EnqueueInput = {
 
 const LEASE_SECONDS = 300;
 
-export async function enqueue(db: Queryable, input: EnqueueInput): Promise<boolean> {
+export async function enqueue(
+  db: Queryable,
+  input: EnqueueInput,
+): Promise<boolean> {
   const inserted = await q(db).exec(sql`
     INSERT INTO outbox (channel, kind, payload, dedupe_key, run_after)
     VALUES (${input.channel}, ${input.kind}, ${input.payload}, ${input.dedupeKey ?? null},
@@ -62,7 +65,10 @@ export async function claimDue(
   }));
 }
 
-export async function markSent(id: number, db: Queryable = getPool()): Promise<void> {
+export async function markSent(
+  id: number,
+  db: Queryable = getPool(),
+): Promise<void> {
   await q(db).exec(sql`
     UPDATE outbox SET status = 'sent', sent_at = now(), last_error = NULL WHERE id = ${id}`);
 }
@@ -72,7 +78,9 @@ export async function markFailed(
   error: unknown,
   db: Queryable = getPool(),
 ): Promise<"retry" | "dead"> {
-  const message = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+  const message = (
+    error instanceof Error ? error.message : String(error)
+  ).slice(0, 500);
   const delayMs = nextAttemptDelayMs(job.attempts);
   if (delayMs === null) {
     await q(db).exec(sql`

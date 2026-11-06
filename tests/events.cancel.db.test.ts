@@ -30,12 +30,14 @@ async function makeUser(handle: string): Promise<number> {
 async function setup(capacity: number | null = null) {
   const organizer = await makeUser("organizer");
   const outsider = await makeUser("outsider");
-  const org = await getPool().query("INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id");
+  const org = await getPool().query(
+    "INSERT INTO orgs (name, slug) VALUES ('Club', 'club') RETURNING id",
+  );
   const orgId = Number(org.rows[0].id);
-  await getPool().query("INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')", [
-    orgId,
-    organizer,
-  ]);
+  await getPool().query(
+    "INSERT INTO org_members (org_id, user_id, role) VALUES ($1, $2, 'owner')",
+    [orgId, organizer],
+  );
   const event = await getPool().query(
     `INSERT INTO events (org_id, slug, title, starts_at, kind, capacity)
      VALUES ($1, 'my-event', 'My Event', now() + interval '7 days', 'ysws', $2) RETURNING id`,
@@ -45,7 +47,10 @@ async function setup(capacity: number | null = null) {
 }
 
 async function isCancelled(eventId: number): Promise<boolean> {
-  const { rows } = await getPool().query("SELECT cancelled_at FROM events WHERE id = $1", [eventId]);
+  const { rows } = await getPool().query(
+    "SELECT cancelled_at FROM events WHERE id = $1",
+    [eventId],
+  );
   return rows[0].cancelled_at !== null;
 }
 
@@ -91,7 +96,10 @@ describe("cancelEvent", () => {
 
     await cancelEvent(organizer, eventId);
 
-    expect(await cancellationEmails()).toEqual([await rsvpId(eventId, ada), await rsvpId(eventId, bob)]);
+    expect(await cancellationEmails()).toEqual([
+      await rsvpId(eventId, ada),
+      await rsvpId(eventId, bob),
+    ]);
   });
 
   it("does not email people who already cancelled their rsvp", async () => {
@@ -133,6 +141,8 @@ describe("cancelEvent", () => {
   it("blocks new rsvps once cancelled", async () => {
     const { organizer, eventId } = await setup();
     await cancelEvent(organizer, eventId);
-    expect(await createRsvp(eventId, await makeUser("ada"))).toEqual({ error: "cancelled" });
+    expect(await createRsvp(eventId, await makeUser("ada"))).toEqual({
+      error: "cancelled",
+    });
   });
 });
