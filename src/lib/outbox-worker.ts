@@ -12,6 +12,17 @@ export type Senders = Partial<Record<OutboxChannel, Sender>>;
 
 export type RunResult = { sent: number; retried: number; dead: number };
 
+// Senders mark errors that will never succeed with `retryable: false`
+// (e.g. SlackError for user_not_found), so they skip the backoff.
+function isPermanent(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "retryable" in error &&
+    error.retryable === false
+  );
+}
+
 export async function runOutboxOnce(
   senders: Senders,
   limit = 20,
@@ -28,7 +39,12 @@ export async function runOutboxOnce(
       await markSent(job.id);
       result.sent++;
     } catch (error) {
-      const outcome = await markFailed(job, error);
+      const outcome = await markFailed(
+        job,
+        error,
+        undefined,
+        isPermanent(error),
+      );
       if (outcome === "retry") result.retried++;
       else result.dead++;
     }

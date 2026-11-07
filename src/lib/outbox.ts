@@ -77,11 +77,12 @@ export async function markFailed(
   job: Pick<OutboxJob, "id" | "attempts">,
   error: unknown,
   db: Queryable = getPool(),
+  permanent = false,
 ): Promise<"retry" | "dead"> {
   const message = (
     error instanceof Error ? error.message : String(error)
   ).slice(0, 500);
-  const delayMs = nextAttemptDelayMs(job.attempts);
+  const delayMs = permanent ? null : nextAttemptDelayMs(job.attempts);
   if (delayMs === null) {
     await q(db).exec(sql`
       UPDATE outbox SET status = 'failed', last_error = ${message} WHERE id = ${job.id}`);

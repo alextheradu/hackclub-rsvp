@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { closePool, getPool } from "@/lib/db";
 import { enqueue, type OutboxJob } from "@/lib/outbox";
 import { runOutboxOnce } from "@/lib/outbox-worker";
+import { SlackError } from "@/lib/slack";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { resetDb, wipeSchema } from "./helpers/db";
 
@@ -76,6 +77,45 @@ describe("runOutboxOnce", () => {
       },
     });
     expect(result).toEqual({ sent: 1, retried: 1, dead: 0 });
+  });
+
+  it("fails a job straight away when the error is not retryable", async () => {
+    await enqueue(getPool(), {
+      channel: "slack",
+      kind: "rsvp_confirmed",
+      payload: {},
+    });
+    const result = await runOutboxOnce({
+      slack: async () => {
+        throw new SlackError("user_not_found", false);
+      },
+    });
+    expect(result).toEqual({ sent: 0, retried: 0, dead: 1 });
+    const { rows } = await getPool().query(
+      "SELECT attempts, status, last_error FROM outbox",
+    );
+    expect(rows[0]).toEqual({
+      attempts: 1,
+      status: "failed",
+      last_error: "slack: user_not_found",
+    });
+  });
+
+  it("still retries a retryable SlackError", async () => {
+    await enqueue(getPool(), {
+      channel: "slack",
+      kind: "rsvp_confirmed",
+      payload: {},
+    });
+    const result = await runOutboxOnce({
+      slack: async () => {
+        throw new SlackError("ratelimited", true);
+      },
+    });
+    expect(result).toEqual({ sent: 0, retried: 1, dead: 0 });
+    const [row] = await statuses();
+    expect(row.status).toBe("pending");
+    expect(row.last_error).toBe("slack: ratelimited");
   });
 
   it("leaves jobs alone when their channel has no sender", async () => {

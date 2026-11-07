@@ -10,7 +10,7 @@ import type { MailTransport } from "@/lib/mail";
 import type { Sender } from "@/lib/outbox-worker";
 import { eventUrl, type EventKind } from "@/lib/slug";
 
-const WANTED_STATUS: Record<EmailKind, readonly string[]> = {
+export const WANTED_STATUS: Record<EmailKind, readonly string[]> = {
   rsvp_confirmed: ["confirmed"],
   rsvp_waitlisted: ["waitlisted"],
   waitlist_promoted: ["confirmed"],

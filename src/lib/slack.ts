@@ -101,3 +101,10 @@ export async function inviteToChannel(channelId: string, slackId: string) {
     throw error;
   }
 }
+
+export async function postDm(slackId: string, text: string): Promise<void> {
+  await slackApi("chat.postMessage", {
+    channel: slackId,
+    text,
+  });
+}
