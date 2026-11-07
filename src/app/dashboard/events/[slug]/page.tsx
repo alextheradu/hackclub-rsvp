@@ -18,8 +18,14 @@ async function Overview({ params }: Pick<Props, "params">) {
 
   const now = new Date();
   const today = toLocalDateTime(now, event.timezone).slice(0, 10);
-  const lastDay = toLocalDateTime(event.endsAt ?? event.startsAt, event.timezone).slice(0, 10);
-  const timeline = days.length > 0 ? buildTimeline(days, days[0].day, today < lastDay ? today : lastDay) : [];
+  const lastDay = toLocalDateTime(
+    event.endsAt ?? event.startsAt,
+    event.timezone,
+  ).slice(0, 10);
+  const timeline =
+    days.length > 0
+      ? buildTimeline(days, days[0].day, today < lastDay ? today : lastDay)
+      : [];
 
   return (
     <OverviewView

@@ -9,9 +9,7 @@ export async function hit(
   now: Date = new Date(),
 ): Promise<RateLimitResults> {
   const windowMs = windowSeconds * 1000;
-  const windowStart = new Date(
-    Math.floor(now.getTime() / windowMs) * windowMs,
-  );
+  const windowStart = new Date(Math.floor(now.getTime() / windowMs) * windowMs);
 
   const { count } = await q().one<{ count: number }>(sql`
     INSERT INTO rate_limits (key, window_start, count)

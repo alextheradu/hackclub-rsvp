@@ -24,7 +24,8 @@ describe("hit", () => {
   it("allows up to the limit, then blocks", async () => {
     const now = at("2026-11-05T12:00:10Z");
     const results = [];
-    for (let i = 0; i < 4; i++) results.push(await hit("rsvp:user:1", 3, 60, now));
+    for (let i = 0; i < 4; i++)
+      results.push(await hit("rsvp:user:1", 3, 60, now));
     expect(results).toEqual([
       { allowed: true, remaining: 2 },
       { allowed: true, remaining: 1 },
@@ -35,14 +36,18 @@ describe("hit", () => {
 
   it("starts counting again in a new window", async () => {
     await hit("rsvp:user:1", 1, 60, at("2026-11-05T12:00:10Z"));
-    expect(await hit("rsvp:user:1", 1, 60, at("2026-11-05T12:00:59Z"))).toEqual({
-      allowed: false,
-      remaining: 0,
-    });
-    expect(await hit("rsvp:user:1", 1, 60, at("2026-11-05T12:01:00Z"))).toEqual({
-      allowed: true,
-      remaining: 0,
-    });
+    expect(await hit("rsvp:user:1", 1, 60, at("2026-11-05T12:00:59Z"))).toEqual(
+      {
+        allowed: false,
+        remaining: 0,
+      },
+    );
+    expect(await hit("rsvp:user:1", 1, 60, at("2026-11-05T12:01:00Z"))).toEqual(
+      {
+        allowed: true,
+        remaining: 0,
+      },
+    );
   });
 
   it("keeps different keys independent", async () => {

@@ -51,31 +51,31 @@ and open [localhost:3000](http://localhost:3000)!
 
 ## env vars
 
-| var                                         | needed?            | what it's for                                                         |
-| ------------------------------------------- | ------------------ | --------------------------------------------------------------------- |
-| `ROOT_DOMAIN`                               | yes                | the main domain, `hackclub.rsvp` in prod (or `localhost` locally)     |
-| `DATABASE_URL`                              | yes                | postgres connection string                                            |
-| `SESSION_SECRET`                            | yes                | signs login cookies, make it long and random (`openssl rand -hex 32`) |
-| `HCA_CLIENT_ID`, `HCA_CLIENT_SECRET`        | yes                | your Hack Club Auth app                                               |
-| `HCA_REDIRECT_URI`                          | yes                | `http://localhost:3000/oauth/callback` locally                        |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | for emails | smtp relay from your mail provider. if these are blank, emails just wait in the queue until you fill them in |
-| `CF_TOKEN`, `CF_ZONE_ID`, `CF_MAX_DOMAINS`, `CF_DOMAIN_TTL_DAYS` | not yet | cloudflare stuff for custom domains (coming soon) |
-| `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_ORGANIZER_CHANNEL_ID` | not yet | slack notifications (coming soon) |
+| var                                                                     | needed?    | what it's for                                                                                                |
+| ----------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `ROOT_DOMAIN`                                                           | yes        | the main domain, `hackclub.rsvp` in prod (or `localhost` locally)                                            |
+| `DATABASE_URL`                                                          | yes        | postgres connection string                                                                                   |
+| `SESSION_SECRET`                                                        | yes        | signs login cookies, make it long and random (`openssl rand -hex 32`)                                        |
+| `HCA_CLIENT_ID`, `HCA_CLIENT_SECRET`                                    | yes        | your Hack Club Auth app                                                                                      |
+| `HCA_REDIRECT_URI`                                                      | yes        | `http://localhost:3000/oauth/callback` locally                                                               |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`         | for emails | smtp relay from your mail provider. if these are blank, emails just wait in the queue until you fill them in |
+| `CF_TOKEN`, `CF_ZONE_ID`, `CF_MAX_DOMAINS`, `CF_DOMAIN_TTL_DAYS`        | not yet    | cloudflare stuff for custom domains (coming soon)                                                            |
+| `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET`, `SLACK_ORGANIZER_CHANNEL_ID` | not yet    | slack notifications (coming soon)                                                                            |
 
 > [!WARNING]
 > never commit your `.env`! it's already gitignored, so just don't force-add it :)
 
 ## scripts
 
-| script              | what it does                                                      |
-| ------------------- | ----------------------------------------------------------------- |
-| `npm run dev`       | runs this project on a local port (3000 by default)               |
-| `npm run build`     | compiles this project for production                              |
-| `npm run start`     | runs the production build                                         |
-| `npm run migrate`   | applies any new database migrations from `migrations/`            |
-| `npm run lint`      | scans the codebase for bugs and style issues with eslint          |
-| `npm run typecheck` | scans the codebase for TypeScript errors (`tsc --noEmit`)         |
-| `npm run test`      | runs the entire test suite once with vitest                       |
+| script              | what it does                                              |
+| ------------------- | --------------------------------------------------------- |
+| `npm run dev`       | runs this project on a local port (3000 by default)       |
+| `npm run build`     | compiles this project for production                      |
+| `npm run start`     | runs the production build                                 |
+| `npm run migrate`   | applies any new database migrations from `migrations/`    |
+| `npm run lint`      | scans the codebase for bugs and style issues with eslint  |
+| `npm run typecheck` | scans the codebase for TypeScript errors (`tsc --noEmit`) |
+| `npm run test`      | runs the entire test suite once with vitest               |
 
 ## tests
 
@@ -89,20 +89,22 @@ npm run test
 
 ## project layout
 
-| folder        | what's in it                                                  |
-| ------------- | ------------------------------------------------------------- |
-| `src/app`     | pages and routes (dashboard, event pages, login)              |
-| `src/lib`     | the actual logic (rsvps, waitlist, emails, auth, csv, etc.)   |
-| `src/proxy.ts`| routes `slug.hackclub.rsvp` to the right event page           |
-| `migrations/` | sql migrations, run in order by `npm run migrate`             |
-| `scripts/`    | the migration runner                                          |
-| `tests/`      | all of the tests                                              |
-| `docs/`       | plans and docs (like the api)                                 |
+| folder         | what's in it                                                |
+| -------------- | ----------------------------------------------------------- |
+| `src/app`      | pages and routes (dashboard, event pages, login)            |
+| `src/lib`      | the actual logic (rsvps, waitlist, emails, auth, csv, etc.) |
+| `src/proxy.ts` | routes `slug.hackclub.rsvp` to the right event page         |
+| `migrations/`  | sql migrations, run in order by `npm run migrate`           |
+| `scripts/`     | the migration runner                                        |
+| `tests/`       | all of the tests                                            |
+| `docs/`        | plans and docs (like the api)                               |
 
 (yes yes i know this is a sign of an ai readme but i believe its useful for ppl who wanna make changes to this app)
 
 ## api
+
 not quite yet ✌️
+
 <!-- check out [docs/api.md](docs/api.md) 👍 (it's still a plan, the api isn't built yet!) -->
 
 ## deployment
