@@ -7,6 +7,8 @@ import {
   enqueue,
   markFailed,
   markSent,
+  requeueFailed,
+  summarizeDeadJobs,
   type OutboxChannel,
 } from "@/lib/outbox";
 import { runMigrations } from "../scripts/migrate.mjs";
@@ -160,5 +162,95 @@ describe("markSent / markFailed", () => {
     expect(stored.status).toBe("failed");
     expect(stored.last_error).toBe("boom");
     expect(await claimDue(10, ALL)).toHaveLength(0);
+  });
+});
+
+describe("summarizeDeadJobs", () => {
+  async function dead(kind: string, lastError: string | null) {
+    await getPool().query(
+      "INSERT INTO outbox (channel, kind, payload, status, last_error) VALUES ('slack', $1, '{}', 'failed', $2)",
+      [kind, lastError],
+    );
+  }
+
+  it("groups dead jobs by channel, kind and error, most common first", async () => {
+    await dead("organizer_invite", "slack: not_in_channel");
+    await dead("organizer_invite", "slack: not_in_channel");
+    await dead("rsvp_confirmed", "slack: user_not_found");
+    await enqueue(getPool(), { channel: "slack", kind: "dm", payload: {} });
+    expect(await summarizeDeadJobs()).toEqual([
+      {
+        channel: "slack",
+        kind: "organizer_invite",
+        lastError: "slack: not_in_channel",
+        count: 2,
+      },
+      {
+        channel: "slack",
+        kind: "rsvp_confirmed",
+        lastError: "slack: user_not_found",
+        count: 1,
+      },
+    ]);
+  });
+
+  it("returns nothing when no jobs are dead", async () => {
+    await enqueue(getPool(), { channel: "slack", kind: "dm", payload: {} });
+    expect(await summarizeDeadJobs()).toEqual([]);
+  });
+});
+
+describe("requeueFailed", () => {
+  async function failed(channel: OutboxChannel) {
+    await getPool().query(
+      "INSERT INTO outbox (channel, kind, payload, status, attempts, last_error, run_after) VALUES ($1, 'k', '{}', 'failed', 3, 'boom', now() + interval '1 day')",
+      [channel],
+    );
+  }
+
+  it("puts failed jobs on the given channels back in the queue, fresh", async () => {
+    await failed("slack");
+    await failed("slack");
+    await failed("email");
+    expect(await requeueFailed(["slack"])).toBe(2);
+    const { rows } = await getPool().query(
+      "SELECT channel, status, attempts, last_error, run_after <= now() AS due FROM outbox ORDER BY id",
+    );
+    expect(rows).toEqual([
+      {
+        channel: "slack",
+        status: "pending",
+        attempts: 0,
+        last_error: null,
+        due: true,
+      },
+      {
+        channel: "slack",
+        status: "pending",
+        attempts: 0,
+        last_error: null,
+        due: true,
+      },
+      {
+        channel: "email",
+        status: "failed",
+        attempts: 3,
+        last_error: "boom",
+        due: false,
+      },
+    ]);
+  });
+
+  it("leaves sent and pending jobs alone", async () => {
+    await enqueue(getPool(), { channel: "slack", kind: "dm", payload: {} });
+    await getPool().query(
+      "INSERT INTO outbox (channel, kind, payload, status) VALUES ('slack', 'k', '{}', 'sent')",
+    );
+    expect(await requeueFailed(["slack"])).toBe(0);
+  });
+
+  it("does nothing for an empty channel list", async () => {
+    await failed("slack");
+    expect(await requeueFailed([])).toBe(0);
   });
 });

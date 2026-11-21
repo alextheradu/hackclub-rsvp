@@ -1,5 +1,13 @@
 import { resolve } from "node:path";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { closePool, getPool } from "@/lib/db";
 import { enqueue, type OutboxJob } from "@/lib/outbox";
 import { runOutboxOnce } from "@/lib/outbox-worker";
@@ -99,6 +107,48 @@ describe("runOutboxOnce", () => {
       status: "failed",
       last_error: "slack: user_not_found",
     });
+  });
+
+  it("logs why a job died, so it shows up without database access", async () => {
+    await enqueue(getPool(), {
+      channel: "slack",
+      kind: "organizer_invite",
+      payload: {},
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await runOutboxOnce({
+        slack: async () => {
+          throw new SlackError("not_in_channel", false);
+        },
+      });
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^outbox: job \d+ slack\/organizer_invite dead after 1 attempt: slack: not_in_channel$/,
+        ),
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("does not log jobs that will be retried", async () => {
+    await enqueue(getPool(), {
+      channel: "slack",
+      kind: "rsvp_confirmed",
+      payload: {},
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await runOutboxOnce({
+        slack: async () => {
+          throw new SlackError("ratelimited", true);
+        },
+      });
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it("still retries a retryable SlackError", async () => {

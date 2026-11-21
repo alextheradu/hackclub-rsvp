@@ -93,3 +93,48 @@ export async function markFailed(
     WHERE id = ${job.id}`);
   return "retry";
 }
+
+export type DeadJobSummary = {
+  channel: OutboxChannel;
+  kind: string;
+  lastError: string | null;
+  count: number;
+};
+
+export async function summarizeDeadJobs(
+  db: Queryable = getPool(),
+): Promise<DeadJobSummary[]> {
+  const rows = await q(db).many<{
+    channel: OutboxChannel;
+    kind: string;
+    last_error: string | null;
+    count: number;
+  }>(sql`
+    SELECT channel, kind, last_error, count(*)::int AS count
+    FROM outbox WHERE status = 'failed'
+    GROUP BY channel, kind, last_error
+    ORDER BY count DESC, channel, kind
+    LIMIT 20`);
+  return rows.map((row) => ({
+    channel: row.channel,
+    kind: row.kind,
+    lastError: row.last_error,
+    count: row.count,
+  }));
+}
+
+export function isOutboxChannel(value: string): value is OutboxChannel {
+  return value === "email" || value === "slack";
+}
+
+// Retries dead jobs after their cause is fixed (e.g. the bot was missing from a
+// channel). Jobs that fail again simply die again.
+export async function requeueFailed(
+  channels: readonly OutboxChannel[],
+  db: Queryable = getPool(),
+): Promise<number> {
+  if (channels.length === 0) return 0;
+  return q(db).exec(sql`
+    UPDATE outbox SET status = 'pending', attempts = 0, last_error = NULL, run_after = now()
+    WHERE status = 'failed' AND channel = ANY(${channels}::text[])`);
+}

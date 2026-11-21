@@ -45,8 +45,19 @@ export async function runOutboxOnce(
         undefined,
         isPermanent(error),
       );
-      if (outcome === "retry") result.retried++;
-      else result.dead++;
+      if (outcome === "retry") {
+        result.retried++;
+      } else {
+        result.dead++;
+        // The only trace of a dead job otherwise lives in the database.
+        const reason = (
+          error instanceof Error ? error.message : String(error)
+        ).slice(0, 500);
+        const attempts = `${job.attempts} attempt${job.attempts === 1 ? "" : "s"}`;
+        console.warn(
+          `outbox: job ${job.id} ${job.channel}/${job.kind} dead after ${attempts}: ${reason}`,
+        );
+      }
     }
   }
   return result;

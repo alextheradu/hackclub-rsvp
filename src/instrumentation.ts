@@ -13,6 +13,32 @@ export async function register() {
       "outbox: SLACK_BOT_TOKEN not configured, Slack messages will wait in the queue",
     );
   try {
+    const { isOutboxChannel, requeueFailed, summarizeDeadJobs } =
+      await import("@/lib/outbox");
+    // One-off: set OUTBOX_RETRY_FAILED=slack (or email,slack), deploy, then
+    // remove it. Lets dead jobs be retried without database access.
+    const retry = (process.env.OUTBOX_RETRY_FAILED ?? "")
+      .split(",")
+      .map((c) => c.trim())
+      .filter(isOutboxChannel);
+    if (retry.length) {
+      const requeued = await requeueFailed(retry);
+      console.warn(
+        `outbox: requeued ${requeued} failed ${retry.join("/")} jobs (OUTBOX_RETRY_FAILED is set; remove it after this deploy)`,
+      );
+    }
+    for (const dead of await summarizeDeadJobs()) {
+      console.warn(
+        `outbox: ${dead.count} dead ${dead.channel}/${dead.kind}: ${dead.lastError ?? "no error recorded"}`,
+      );
+    }
+  } catch (error) {
+    console.error(
+      "outbox: dead job summary failed:",
+      error instanceof Error ? error.message : "unknown error",
+    );
+  }
+  try {
     const { inviteExistingUsers } = await import("@/lib/organizer-invite");
     const queued = await inviteExistingUsers();
     if (queued)
