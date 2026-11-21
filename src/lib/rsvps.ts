@@ -6,6 +6,16 @@ export type CreateRsvpResult =
   | { id: number; status: "confirmed" | "waitlisted" }
   | { error: "closed" | "cancelled" | "own_event" | "not_eligible" };
 
+export const RSVP_ERROR_MESSAGES = {
+  closed: "RSVPs are closed for this event.",
+  cancelled: "This event was cancelled.",
+  own_event: "You cannot RSVP to your own event.",
+  not_eligible: "This event is only for HCA verified people.",
+} as const satisfies Record<
+  Extract<CreateRsvpResult, { error: string }>["error"],
+  string
+>;
+
 type NoticeKind = "rsvp_confirmed" | "rsvp_waitlisted" | "waitlist_promoted";
 
 async function enqueueNotices(

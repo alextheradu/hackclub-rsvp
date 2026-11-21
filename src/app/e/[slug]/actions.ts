@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getEventBySlug } from "@/lib/events";
-import { cancelRsvp, createRsvp } from "@/lib/rsvps";
+import { cancelRsvp, createRsvp, RSVP_ERROR_MESSAGES } from "@/lib/rsvps";
 import { hit, RATE_LIMIT_MESSAGE } from "@/lib/ratelimit";
 import { validateSlug } from "@/lib/slug";
 
@@ -19,13 +19,6 @@ async function resolve(slug: string) {
 
 export type RsvpFormState = { message: string | null };
 
-const ERRORS = {
-  closed: "RSVPs are closed for this event.",
-  cancelled: "This event was cancelled.",
-  own_event: "You cannot RSVP to your own event.",
-  not_eligible: "This event is only for HCA verified people.",
-} as const;
-
 async function allowed(userId: number): Promise<boolean> {
   return (await hit(`rsvp:user:${userId}`, 10, 60)).allowed;
 }
@@ -39,7 +32,9 @@ export async function rsvpAction(
   if (!(await allowed(ctx.user.id))) return { message: RATE_LIMIT_MESSAGE };
   const result = await createRsvp(ctx.event.id, ctx.user.id);
   revalidatePath(`/e/${slug}`);
-  return { message: "error" in result ? ERRORS[result.error] : null };
+  return {
+    message: "error" in result ? RSVP_ERROR_MESSAGES[result.error] : null,
+  };
 }
 
 export async function cancelAction(slug: string): Promise<void> {

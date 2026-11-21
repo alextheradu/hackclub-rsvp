@@ -1,5 +1,5 @@
 import { checkEligibility, type Eligibility } from "@/lib/eligibility";
-import { inviteToChannel, postDm, SlackError } from "@/lib/slack";
+import { escapeSlack, inviteToChannel, postDm, SlackError } from "@/lib/slack";
 import { q, sql } from "@/lib/db";
 import { rootDomain } from "@/lib/domain";
 import { WANTED_STATUS } from "@/lib/email-sender";
@@ -22,13 +22,6 @@ export type SlackDeps = {
 };
 
 const REAL: SlackDeps = { postDm, inviteToChannel, checkEligibility };
-
-function escapeSlack(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 type SlackRow = {
   status: string;

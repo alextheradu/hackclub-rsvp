@@ -40,6 +40,14 @@ export async function fetchSlackAvatar(
   }
 }
 
+// Slack mrkdwn treats &, < and > as control characters (links, @channel pings).
+export function escapeSlack(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 const RETRYABLE = new Set([
   "ratelimited",
   "rate_limited",

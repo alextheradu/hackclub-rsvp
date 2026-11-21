@@ -12,6 +12,17 @@ export async function register() {
     console.warn(
       "outbox: SLACK_BOT_TOKEN not configured, Slack messages will wait in the queue",
     );
+  try {
+    const { inviteExistingUsers } = await import("@/lib/organizer-invite");
+    const queued = await inviteExistingUsers();
+    if (queued)
+      console.log(`slack: queued ${queued} organizer channel invites`);
+  } catch (error) {
+    console.error(
+      "slack: organizer invite backfill failed:",
+      error instanceof Error ? error.message : "unknown error",
+    );
+  }
   startOutboxWorker({
     email: smtpConfigured()
       ? emailSender(createSmtpTransport(), process.env.MAIL_FROM!)
