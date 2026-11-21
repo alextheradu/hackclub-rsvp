@@ -90,8 +90,25 @@ async function sendDm(
   await deps.postDm(row.slack_id, `*${mail.subject}*\n${url}`);
 }
 
+async function sendOrganizerInvite(
+  payload: Record<string, unknown>,
+  deps: SlackDeps,
+): Promise<void> {
+  const { userId, channelId } = payload;
+  if (typeof channelId !== "string" || !channelId) {
+    throw new SlackError("organizer_invite_missing_channel", false);
+  }
+  const user = await q().maybe<{ slack_id: string | null }>(sql`
+    SELECT slack_id FROM users WHERE id = ${userId}`);
+  if (!user?.slack_id) return;
+  await deps.inviteToChannel(channelId, user.slack_id);
+}
+
 export function slackSender(deps: SlackDeps = REAL): Sender {
   return async (job) => {
+    if (job.kind === "organizer_invite") {
+      return sendOrganizerInvite(job.payload, deps);
+    }
     if (job.kind !== "channel_invite" && !isEmailKind(job.kind)) {
       throw new SlackError(`unknown_kind_${job.kind}`, false);
     }

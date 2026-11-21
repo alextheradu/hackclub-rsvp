@@ -6,6 +6,7 @@ import {
   fetchUserinfo,
   safeReturnTo,
 } from "@/lib/hca";
+import { onFirstLogin } from "@/lib/organizer-invite";
 import { clientIp, hit, tooManyRequests } from "@/lib/ratelimit";
 import { signSession } from "@/lib/session";
 import { fetchSlackAvatar } from "@/lib/slack";
@@ -38,17 +39,30 @@ export async function GET(request: Request) {
   }
 
   let uid: number;
+  let slackId: string | undefined;
+  let isNew: boolean;
   try {
     const { accessToken } = await exchangeCode(code);
     const profile = await fetchUserinfo(accessToken);
     const avatarUrl = await fetchSlackAvatar(profile.slack_id);
-    uid = (await upsertUser(profile, avatarUrl)).id;
+    ({ id: uid, isNew } = await upsertUser(profile, avatarUrl));
+    slackId = profile.slack_id;
   } catch (error) {
     console.error(
       "login failed:",
       error instanceof Error ? error.message : "unknown error",
     );
     return new Response("Login failed", { status: 502 });
+  }
+
+  // A missed invite shouldn't block signing in.
+  try {
+    await onFirstLogin({ id: uid, isNew }, slackId);
+  } catch (error) {
+    console.error(
+      "organizer invite enqueue failed:",
+      error instanceof Error ? error.message : "unknown error",
+    );
   }
 
   const returnTo = safeReturnTo(store.get("hca_return_to")?.value ?? null);

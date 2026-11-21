@@ -252,3 +252,67 @@ describe("slackSender channel invites", () => {
     },
   );
 });
+
+describe("slackSender organizer invites", () => {
+  function organizerJob(payload: Record<string, unknown>): OutboxJob {
+    return {
+      id: 1,
+      channel: "slack",
+      kind: "organizer_invite",
+      payload,
+      attempts: 1,
+    };
+  }
+
+  it("invites the user to the organizer channel from the job", async () => {
+    const { ada } = await setup();
+    const slack = fakeSlack();
+    await slackSender(slack.deps)(
+      organizerJob({ userId: ada, channelId: "C0ORGANIZERS" }),
+    );
+    expect(slack.invites).toEqual([
+      { channelId: "C0ORGANIZERS", slackId: "U0ADA" },
+    ]);
+    expect(slack.deps.checkEligibility).not.toHaveBeenCalled();
+  });
+
+  it("uses the user's current Slack ID, not the one at signup", async () => {
+    const { ada } = await setup();
+    await getPool().query("UPDATE users SET slack_id = 'U0NEW' WHERE id = $1", [
+      ada,
+    ]);
+    const slack = fakeSlack();
+    await slackSender(slack.deps)(
+      organizerJob({ userId: ada, channelId: "C0ORGANIZERS" }),
+    );
+    expect(slack.invites).toEqual([
+      { channelId: "C0ORGANIZERS", slackId: "U0NEW" },
+    ]);
+  });
+
+  it("does nothing once the user has no Slack ID", async () => {
+    const { linus } = await setup();
+    const slack = fakeSlack();
+    await slackSender(slack.deps)(
+      organizerJob({ userId: linus, channelId: "C0ORGANIZERS" }),
+    );
+    expect(slack.deps.inviteToChannel).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for a user that no longer exists", async () => {
+    const slack = fakeSlack();
+    await slackSender(slack.deps)(
+      organizerJob({ userId: 999, channelId: "C0ORGANIZERS" }),
+    );
+    expect(slack.deps.inviteToChannel).not.toHaveBeenCalled();
+  });
+
+  it("fails permanently when the job has no channel", async () => {
+    const { ada } = await setup();
+    const slack = fakeSlack();
+    await expect(
+      slackSender(slack.deps)(organizerJob({ userId: ada })),
+    ).rejects.toMatchObject({ retryable: false });
+    expect(slack.deps.inviteToChannel).not.toHaveBeenCalled();
+  });
+});
