@@ -80,7 +80,7 @@ async function statusOf(eventId: number, userId: number): Promise<string> {
 
 async function promotionEmails(): Promise<number> {
   const { rows } = await getPool().query(
-    "SELECT count(*)::int AS n FROM outbox WHERE kind = 'waitlist_promoted'",
+    "SELECT count(*)::int AS n FROM outbox WHERE kind = 'waitlist_promoted' AND channel = 'email'",
   );
   return rows[0].n;
 }

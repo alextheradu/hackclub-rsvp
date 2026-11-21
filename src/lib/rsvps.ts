@@ -6,6 +6,36 @@ export type CreateRsvpResult =
   | { id: number; status: "confirmed" | "waitlisted" }
   | { error: "closed" | "cancelled" | "own_event" | "not_eligible" };
 
+type NoticeKind = "rsvp_confirmed" | "rsvp_waitlisted" | "waitlist_promoted";
+
+async function enqueueNotices(
+  client: Queryable,
+  kind: NoticeKind,
+  rsvpId: number,
+): Promise<void> {
+  const payload = { rsvpId };
+  await enqueue(client, {
+    channel: "email",
+    kind,
+    payload,
+    dedupeKey: `${kind}:${rsvpId}`,
+  });
+  await enqueue(client, {
+    channel: "slack",
+    kind,
+    payload,
+    dedupeKey: `slack:${kind}:${rsvpId}`,
+  });
+  if (kind !== "rsvp_waitlisted") {
+    await enqueue(client, {
+      channel: "slack",
+      kind: "channel_invite",
+      payload,
+      dedupeKey: `channel_invite:${rsvpId}`,
+    });
+  }
+}
+
 export async function createRsvp(
   eventId: number,
   userId: number,
@@ -56,12 +86,7 @@ export async function createRsvp(
       RETURNING id`);
     const id = Number(inserted.id);
     const kind = status === "confirmed" ? "rsvp_confirmed" : "rsvp_waitlisted";
-    await enqueue(client, {
-      channel: "email",
-      kind,
-      payload: { rsvpId: id },
-      dedupeKey: `${kind}:${id}`,
-    });
+    await enqueueNotices(client, kind, id);
     return { id, status };
   });
 }
@@ -110,13 +135,7 @@ export async function promoteWaitlist(
     UPDATE rsvps SET status = 'confirmed', status_changed_at = now()
     WHERE id = ANY(${next.map((row) => row.id)}::bigint[])`);
   for (const row of next) {
-    const rsvpId = Number(row.id);
-    await enqueue(client, {
-      channel: "email",
-      kind: "waitlist_promoted",
-      payload: { rsvpId },
-      dedupeKey: `waitlist_promoted:${rsvpId}`,
-    });
+    await enqueueNotices(client, "waitlist_promoted", Number(row.id));
   }
   return next.map((row) => Number(row.user_id));
 }

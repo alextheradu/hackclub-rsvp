@@ -134,7 +134,7 @@ describe("emailSender", () => {
     });
     expect(result.retried).toBe(1);
     const { rows } = await getPool().query(
-      "SELECT status, last_error FROM outbox",
+      "SELECT status, last_error FROM outbox WHERE channel = 'email'",
     );
     expect(rows[0]).toEqual({
       status: "pending",

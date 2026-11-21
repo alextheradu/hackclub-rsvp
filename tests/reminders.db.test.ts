@@ -44,21 +44,27 @@ async function setup(
 }
 
 describe("queueReminders", () => {
-  it("queues one reminder for an event starting within 24 hours", async () => {
+  it("queues one email and one Slack reminder for an event starting within 24 hours", async () => {
     await setup("12 hours");
-    expect(await queueReminders()).toBe(1);
+    expect(await queueReminders()).toBe(2);
     expect(await queueReminders()).toBe(0);
   });
 
-  it("queues an email job pointing at the rsvp", async () => {
+  it("queues email and Slack jobs pointing at the rsvp", async () => {
     const { rsvpId } = await setup("12 hours");
     await queueReminders();
     const { rows } = await getPool().query(
-      "SELECT channel, kind, payload, status FROM outbox",
+      "SELECT channel, kind, payload, status FROM outbox ORDER BY channel",
     );
     expect(rows).toEqual([
       {
         channel: "email",
+        kind: "event_reminder",
+        payload: { rsvpId },
+        status: "pending",
+      },
+      {
+        channel: "slack",
         kind: "event_reminder",
         payload: { rsvpId },
         status: "pending",

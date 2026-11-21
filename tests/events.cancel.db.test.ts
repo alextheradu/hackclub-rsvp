@@ -54,9 +54,10 @@ async function isCancelled(eventId: number): Promise<boolean> {
   return rows[0].cancelled_at !== null;
 }
 
-async function cancellationEmails(): Promise<number[]> {
+async function cancellationEmails(channel = "email"): Promise<number[]> {
   const { rows } = await getPool().query(
-    "SELECT payload FROM outbox WHERE kind = 'event_cancelled' ORDER BY id",
+    "SELECT payload FROM outbox WHERE kind = 'event_cancelled' AND channel = $1 ORDER BY id",
+    [channel],
   );
   return rows.map((row) => Number(row.payload.rsvpId));
 }
@@ -97,6 +98,21 @@ describe("cancelEvent", () => {
     await cancelEvent(organizer, eventId);
 
     expect(await cancellationEmails()).toEqual([
+      await rsvpId(eventId, ada),
+      await rsvpId(eventId, bob),
+    ]);
+  });
+
+  it("queues a Slack DM for every confirmed and waitlisted attendee too", async () => {
+    const { organizer, eventId } = await setup(1);
+    const ada = await makeUser("ada");
+    const bob = await makeUser("bob");
+    await createRsvp(eventId, ada);
+    await createRsvp(eventId, bob);
+
+    await cancelEvent(organizer, eventId);
+
+    expect(await cancellationEmails("slack")).toEqual([
       await rsvpId(eventId, ada),
       await rsvpId(eventId, bob),
     ]);

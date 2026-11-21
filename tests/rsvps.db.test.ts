@@ -277,9 +277,12 @@ describe("cancelRsvp", () => {
   });
 });
 
-async function outbox(): Promise<{ kind: string; rsvpId: number }[]> {
+async function outbox(
+  channel = "email",
+): Promise<{ kind: string; rsvpId: number }[]> {
   const { rows } = await getPool().query(
-    "SELECT kind, payload FROM outbox ORDER BY id",
+    "SELECT kind, payload FROM outbox WHERE channel = $1 ORDER BY id",
+    [channel],
   );
   return rows.map((r) => ({ kind: r.kind, rsvpId: r.payload.rsvpId }));
 }
@@ -321,6 +324,34 @@ describe("rsvp notifications", () => {
       kind: "waitlist_promoted",
       rsvpId: "id" in waiting && waiting.id,
     });
+  });
+
+  it("queues a Slack DM and channel invite when confirmed, DM only when waitlisted", async () => {
+    const { eventId } = await makeEvent({ capacity: 1 });
+    const [a, b] = await makeUsers(2);
+    const first = await createRsvp(eventId, a);
+    const second = await createRsvp(eventId, b);
+    const firstId = "id" in first && first.id;
+    const secondId = "id" in second && second.id;
+    expect(await outbox("slack")).toEqual([
+      { kind: "rsvp_confirmed", rsvpId: firstId },
+      { kind: "channel_invite", rsvpId: firstId },
+      { kind: "rsvp_waitlisted", rsvpId: secondId },
+    ]);
+
+    await cancelRsvp(eventId, a);
+    expect((await outbox("slack")).slice(-2)).toEqual([
+      { kind: "waitlist_promoted", rsvpId: secondId },
+      { kind: "channel_invite", rsvpId: secondId },
+    ]);
+  });
+
+  it("does not queue Slack notices again when the same user RSVPs twice", async () => {
+    const { eventId } = await makeEvent();
+    const [a] = await makeUsers(1);
+    await createRsvp(eventId, a);
+    await createRsvp(eventId, a);
+    expect(await outbox("slack")).toHaveLength(2);
   });
 });
 

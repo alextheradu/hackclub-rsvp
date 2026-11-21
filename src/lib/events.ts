@@ -281,10 +281,12 @@ export async function cancelEvent(
     );
     await db.exec(sql`
       INSERT INTO outbox (channel, kind, payload, dedupe_key)
-      SELECT 'email', 'event_cancelled', json_build_object('rsvpId', r.id), 'event_cancelled_' || r.id
+      SELECT c.channel, 'event_cancelled', json_build_object('rsvpId', r.id), c.key_prefix || r.id
       FROM rsvps r
+      CROSS JOIN (VALUES ('email', 'event_cancelled_'), ('slack', 'slack:event_cancelled:'))
+        AS c(channel, key_prefix)
       WHERE r.event_id = ${eventId} AND r.status IN ('confirmed', 'waitlisted')
-      ORDER BY r.id
+      ORDER BY r.id, c.channel
       ON CONFLICT (dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING`);
     return "ok";
   });
