@@ -12,7 +12,7 @@
     "migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/migrate.mjs"
   },
   "dependencies": {
-    "next": "16.4.3",
+    "next": "16.4.6",
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "react": "19.3.1",

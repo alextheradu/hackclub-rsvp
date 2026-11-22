@@ -8,7 +8,9 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+# A new ID per build lets Next detect tabs left open across a deploy and hard
+# reload them, instead of failing with "Failed to find Server Action".
+RUN NEXT_DEPLOYMENT_ID=$(date +%s) npm run build
 
 FROM node:26.12.1-alpine AS runner
 WORKDIR /app
