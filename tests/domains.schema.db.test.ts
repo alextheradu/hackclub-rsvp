@@ -81,9 +81,7 @@ describe("custom_domains schema", () => {
     async (status) => {
       const [a, b] = await makeEvents(2);
       await insertDomain(a, "rsvp.club.org", status);
-      await expect(insertDomain(b, "rsvp.club.org")).rejects.toThrow(
-        /unique/i,
-      );
+      await expect(insertDomain(b, "rsvp.club.org")).rejects.toThrow(/unique/i);
     },
   );
 
