@@ -16,7 +16,8 @@
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "tldts": "7.5.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
